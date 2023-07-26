@@ -2,6 +2,8 @@ import subprocess
 from splight_launcher.schemas import Command, Component, HubComponent
 from splight_launcher.settings import settings, SPLIGHT_HOME
 import docker
+from threading import Thread
+from splight_launcher.exporter import Exporter
 from splight_lib.restclient import SplightRestClient
 from splight_lib.auth.token import SplightAuthToken
 from furl import furl
@@ -18,7 +20,10 @@ class CommandHandler:
         )
         self._client.update_headers(token.header)
         self._docker_client = docker.from_env()
-        self._containers = {}
+        self._exporter = Exporter()
+        self._exporter_thread = Thread(target=self._exporter.start, args = ())
+        self._exporter_thread.start() # TODO: i don't like this thread
+
 
     def _get_component_tag(self, hub_component: HubComponent):
         name = hub_component.name.lower()
@@ -36,7 +41,7 @@ class CommandHandler:
         # pull docker image
         image = self._docker_client.images.pull(
             repository=settings.ECR_REPOSITORY, tag=component_tag
-        )
+
 
         # run docker image
         run_spec = json.dumps(
@@ -59,20 +64,21 @@ class CommandHandler:
                 "COMPONENT_ID": command.component_id,
             },
             network_mode='host', # TODO: delete after testing
-            remove=True,
+            remove=False,
             command=["python", "runner.py", "-r", run_spec],
         )
-        self._containers[command.component_id] = container
-        # logs = container.logs(stream=True, timestamps=True)
-        # try:
-        #     while True:
-        #         line = next(logs).decode("utf-8")
-        #         print(line)
-        # except StopIteration:
-        #     print(f'log stream ended for {container}')
+        self._exporter.add_container(command.component_id, container)
+
+    def _execute_stop(self, command: Command):
+        container = self._exporter.get_container(command.component_id)
+        if container:
+            container.stop()
+            self._exporter.remove_container(command.component_id)
 
     def execute(self, command: Command):
         if command.action == "run":
             self._execute_run(command)
+        elif command.action == "stop":
+            self._execute_stop(command)
         else:
-            raise NotImplementedError
+            raise NotImplementedError()
