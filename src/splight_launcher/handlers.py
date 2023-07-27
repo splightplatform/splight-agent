@@ -1,3 +1,5 @@
+import base64
+import boto3
 import subprocess
 from splight_launcher.schemas import Command, Component, HubComponent
 from splight_launcher.settings import settings, SPLIGHT_HOME
@@ -20,10 +22,18 @@ class CommandHandler:
         )
         self._client.update_headers(token.header)
         self._docker_client = docker.from_env()
+        self._login_to_ecr()
         self._exporter = Exporter()
         self._exporter_thread = Thread(target=self._exporter.start, args = ())
         self._exporter_thread.start() # TODO: i don't like this thread
 
+    def _login_to_ecr(self):
+        """ Login to ECR (this shouldn't be needed) """
+        ecr_client = boto3.client('ecr', region_name='us-east-1')
+        token = ecr_client.get_authorization_token()
+        username, password = base64.b64decode(token['authorizationData'][0]['authorizationToken']).decode().split(':')
+        registry = token['authorizationData'][0]['proxyEndpoint']
+        self._docker_client.login(username, password, registry=registry)
 
     def _get_component_tag(self, hub_component: HubComponent):
         name = hub_component.name.lower()
@@ -41,6 +51,7 @@ class CommandHandler:
         # pull docker image
         image = self._docker_client.images.pull(
             repository=settings.ECR_REPOSITORY, tag=component_tag
+        )
 
 
         # run docker image
