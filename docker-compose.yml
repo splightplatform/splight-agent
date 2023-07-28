@@ -17,8 +17,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     command: python src/main.py
-    networks:
-      - splight
+    network_mode: "host" # TODO: remove this or move to dev mode
     volumes:
       - .:/code
       - /var/run/docker.sock:/var/run/docker.sock
@@ -26,6 +25,6 @@ services:
     env_file:
       - ./config/.env
 
-networks:
-  splight:
-    name: splight
+# networks:
+#   splight:
+#     name: splight
