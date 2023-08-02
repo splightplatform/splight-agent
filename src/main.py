@@ -7,7 +7,8 @@ from furl import furl
 import time
 
 # TODO: should we implement database_client in launcher?
-LAUNCHER_PENDING_TASKS_URL = "v2/engine/launchers/{launcher}/pending_tasks/"
+LAUNCHERS_URL = "v2/engine/launchers/"
+LAUNCHER_PENDING_TASKS_URL = LAUNCHERS_URL + "{launcher}/pending_tasks/"
 
 if __name__ == "__main__":
     base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
@@ -19,11 +20,12 @@ if __name__ == "__main__":
     client.update_headers(token.header)
     command_handler = CommandHandler()
 
-    # TODO: config cli
-
     if not settings.LAUNCHER_ID:
-        # create launcher in platform
-        pass
+        # create launcher
+        response = client.post(base_url / LAUNCHERS_URL, data={"name": settings.LAUNCHER_NAME})
+        settings.LAUNCHER_ID = response.json().get('id')
+        settings.save()
+
     
     # pooling
     try:

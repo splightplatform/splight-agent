@@ -31,6 +31,7 @@ class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_SECRET_KEY: str = ""
     SPLIGHT_PLATFORM_API_HOST: str = "https://api.splight-ai.com"
     LAUNCHER_ID: str = ""
+    LAUNCHER_NAME: str = ""
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""
     NAMESPACE: str = ""
@@ -49,6 +50,10 @@ class SplightSettings(BaseSettings, Singleton):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return init_settings, yml_config_setting, env_settings
-
+        
+    def save(self):
+        config_file = os.path.join(SPLIGHT_HOME, "launcher_config")
+        with open(config_file, "w") as f:
+            yaml.dump(self.dict(), f)
 
 settings = SplightSettings()

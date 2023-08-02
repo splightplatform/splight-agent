@@ -22,8 +22,9 @@ services:
       - .:/code
       - /var/run/docker.sock:/var/run/docker.sock
       - $HOME/.aws/credentials:/root/.aws/credentials
-    env_file:
-      - ./config/.env
+      - $HOME/.splight/launcher_config:/root/.splight/launcher_config
+    environment:
+      - LAUNCHER_NAME=${LAUNCHER_NAME}
 
 # networks:
 #   splight:
