@@ -1,6 +1,3 @@
-configure:
-	@./makefile_scripts/configure.sh
-
 start:
 	@./makefile_scripts/start.sh $(MODE)
 
