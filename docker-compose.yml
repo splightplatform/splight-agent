@@ -7,9 +7,9 @@ x-logging: &logging
     max-size: 10m
 
 services:
-  splight-launcher:
-    image: splight-launcher:latest
-    container_name: splight-launcher
+  splight-agent:
+    image: splight-agent:latest
+    container_name: splight-agent
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -22,9 +22,9 @@ services:
       - .:/code
       - /var/run/docker.sock:/var/run/docker.sock
       - $HOME/.aws/credentials:/root/.aws/credentials
-      - $HOME/.splight/launcher_config:/root/.splight/launcher_config
+      - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
-      - LAUNCHER_NAME=${LAUNCHER_NAME}
+      - AGENT_NAME=${AGENT_NAME}
 
 # networks:
 #   splight:

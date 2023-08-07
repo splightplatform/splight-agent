@@ -19,7 +19,7 @@ class Singleton:
 
 def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
     config = {}
-    config_file = os.path.join(SPLIGHT_HOME, "launcher_config")
+    config_file = os.path.join(SPLIGHT_HOME, "agent_config")
     if os.path.exists(config_file):
         with open(config_file) as f:
             config = yaml.safe_load(f)
@@ -30,8 +30,8 @@ class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
     SPLIGHT_SECRET_KEY: str = ""
     SPLIGHT_PLATFORM_API_HOST: str = "https://api.splight-ai.com"
-    LAUNCHER_ID: str = ""
-    LAUNCHER_NAME: str = ""
+    AGENT_ID: str = ""
+    AGENT_NAME: str = ""
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""
     NAMESPACE: str = ""
@@ -52,7 +52,7 @@ class SplightSettings(BaseSettings, Singleton):
             return init_settings, yml_config_setting, env_settings
         
     def save(self):
-        config_file = os.path.join(SPLIGHT_HOME, "launcher_config")
+        config_file = os.path.join(SPLIGHT_HOME, "agent_config")
         with open(config_file, "w") as f:
             yaml.dump(self.dict(), f)
 

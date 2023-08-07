@@ -6,7 +6,7 @@ class Command(BaseModel):
     component_id: str
 
 # Component
-### (only the fields that are needed for the launcher)
+### (only the fields that are needed for the agent)
 class HubComponent(BaseModel):
     id: str
     name: str

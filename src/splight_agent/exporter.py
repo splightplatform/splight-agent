@@ -1,6 +1,6 @@
 from docker.models.containers import Container
 import time
-from splight_launcher.settings import settings
+from splight_agent.settings import settings
 from splight_lib.restclient import SplightRestClient
 from splight_lib.auth.token import SplightAuthToken
 from furl import furl

@@ -4,13 +4,13 @@
 # 	docker volume create ${DATABASE_VOL}
 # fi
 
-LAUNCHER_ID=$(grep LAUNCHER_ID $HOME/.splight/launcher_config) && LAUNCHER_ID=${LAUNCHER_ID//*LAUNCHER_ID: /}
+AGENT_ID=$(grep AGENT_ID $HOME/.splight/agent_config) && AGENT_ID=${AGENT_ID//*AGENT_ID: /}
 
-if [[ -z "$LAUNCHER_ID" ]]; then
-    printf "Enter a name for your launcher (e.g. 'my-launcher'): "
-    read -r LAUNCHER_NAME
-    echo "LAUNCHER_NAME: $LAUNCHER_NAME"
-    echo "Starting launcher with name: $LAUNCHER_NAME"
+if [[ -z "$AGENT_ID" ]]; then
+    printf "Enter a name for your agent (e.g. 'my-agent'): "
+    read -r AGENT_NAME
+    echo "AGENT_NAME: $AGENT_NAME"
+    echo "Starting agent with name: $AGENT_NAME"
 fi
 
-LAUNCHER_NAME=$LAUNCHER_NAME docker compose -f docker-compose.yml up -d
+AGENT_NAME=$AGENT_NAME docker compose -f docker-compose.yml up -d

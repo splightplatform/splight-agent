@@ -1,11 +1,11 @@
 import base64
 import boto3
 import subprocess
-from splight_launcher.schemas import Command, Component, HubComponent
-from splight_launcher.settings import settings, SPLIGHT_HOME
+from splight_agent.schemas import Command, Component, HubComponent
+from splight_agent.settings import settings, SPLIGHT_HOME
 import docker
 from threading import Thread
-from splight_launcher.exporter import Exporter
+from splight_agent.exporter import Exporter
 from splight_lib.restclient import SplightRestClient
 from splight_lib.auth.token import SplightAuthToken
 from furl import furl
