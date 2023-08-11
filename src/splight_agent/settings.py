@@ -4,10 +4,9 @@ from typing import Any, Dict, Tuple
 import yaml
 from pydantic import BaseSettings, Extra, root_validator
 from pydantic.env_settings import SettingsSourceCallable
-from furl import furl
 
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
-
+API_POLL_INTERVAL = 15
 
 class Singleton:
     def __new__(cls, *args, **kw):
@@ -30,8 +29,7 @@ class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
     SPLIGHT_SECRET_KEY: str = ""
     SPLIGHT_PLATFORM_API_HOST: str = "https://api.splight-ai.com"
-    AGENT_ID: str = ""
-    AGENT_NAME: str = ""
+    COMPUTE_NODE_ID: str = ""
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""
     NAMESPACE: str = ""
