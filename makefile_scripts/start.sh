@@ -1,15 +1,19 @@
-#!/bin/bash
-# if [[ -z $(docker volume ls -f name=${DATABASE_VOL} --format="{{ .Name }}") ]]; then
-# 	echo "Creating Database volume"
-# 	docker volume create ${DATABASE_VOL}
-# fi
-
-AGENT_ID=$(grep AGENT_ID $HOME/.splight/agent_config) && AGENT_ID=${AGENT_ID//*AGENT_ID: /}
-
-if [[ -z "$AGENT_ID" ]]; then
-    printf "Enter the compute node's id: "
-    read -r AGENT_ID
-    echo "Starting agent with id: $AGENT_ID"
+CONFIG_FILE=$HOME/.splight/agent_config
+if [ ! -f "$CONFIG_FILE" ]; then
+    touch $CONFIG_FILE
 fi
 
-AGENT_ID=$AGENT_ID docker compose -f docker-compose.yml up -d
+if [ -n "$TOKEN" ]; then
+    echo $TOKEN | base64 --decode > $CONFIG_FILE
+fi
+
+COMPUTE_NODE_ID=$(grep COMPUTE_NODE_ID $CONFIG_FILE) && COMPUTE_NODE_ID=${COMPUTE_NODE_ID//*COMPUTE_NODE_ID: /}
+
+if [ -z "$COMPUTE_NODE_ID" ]; then
+    if [ ! -n "$TOKEN" ]; then
+        printf "You need to set the TOKEN variable\n"
+        exit 1
+    fi
+fi
+
+docker compose -f docker-compose.yml up -d

@@ -8,6 +8,7 @@ from pydantic.env_settings import SettingsSourceCallable
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
 API_POLL_INTERVAL = 15
 
+
 class Singleton:
     def __new__(cls, *args, **kw):
         if not hasattr(cls, "_instance"):
@@ -29,6 +30,7 @@ class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
     SPLIGHT_SECRET_KEY: str = ""
     SPLIGHT_PLATFORM_API_HOST: str = "https://api.splight-ai.com"
+    SPLIGHT_GRPC_HOST: str = "grpc.splight-ai.com:443"
     COMPUTE_NODE_ID: str = ""
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""
@@ -48,10 +50,6 @@ class SplightSettings(BaseSettings, Singleton):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return init_settings, yml_config_setting, env_settings
-        
-    def save(self):
-        config_file = os.path.join(SPLIGHT_HOME, "agent_config")
-        with open(config_file, "w") as f:
-            yaml.dump(self.dict(), f)
+
 
 settings = SplightSettings()

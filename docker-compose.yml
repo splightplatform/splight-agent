@@ -24,8 +24,8 @@ services:
       - $HOME/.aws/credentials:/root/.aws/credentials
       - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
-      - AGENT_NAME=${AGENT_NAME}
-
+      - LOG_LEVEL=INFO
+      
 # networks:
 #   splight:
 #     name: splight

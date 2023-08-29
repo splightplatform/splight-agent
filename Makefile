@@ -1,5 +1,5 @@
 start:
-	@./makefile_scripts/start.sh $(MODE)
+	@./makefile_scripts/start.sh $(TOKEN)
 
 stop:
 	@./makefile_scripts/stop.sh

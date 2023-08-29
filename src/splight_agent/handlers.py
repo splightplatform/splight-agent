@@ -1,22 +1,26 @@
-import base64
-import time
-from typing import List
-import boto3
-from splight_agent.models import Component, ComputeNode, HubComponent
-from splight_agent.settings import settings, API_POLL_INTERVAL
-import docker
-from threading import Thread
-from splight_agent.exporter import Exporter
 import json
+import logging
+import time
+from threading import Thread
+from typing import List
+
+import docker
+
+from splight_agent.exporter import Exporter
+from splight_agent.models import Component, ComputeNode, HubComponent
+from splight_agent.settings import API_POLL_INTERVAL, settings
+
 
 class ContainerActions:
-    run: List = []
-    stop: List = []
-    restart: List = []
-    do_nothing: List = []
+    run: List[Component] = []
+    stop: List[Component] = []
+    restart: List[Component] = []
+    do_nothing: List[Component] = []
 
     def __init__(self) -> None:
-        self._exporter = Exporter() # I can do this since exporter is singleton
+        self._exporter = (
+            Exporter()
+        )  # I can do this since exporter is singleton
 
     def empty_lists(self):
         self.run = []
@@ -42,25 +46,25 @@ class ContainerActions:
                     else:
                         self.do_nothing.append(component)
 
+    def __str__(self) -> str:
+        return (
+            "ContainerActions:\n"
+            + f"run: {self.run}\n"
+            + f"stop: {self.stop}\n"
+            + f"restart: {self.restart}\n"
+            + f"do_nothing: {self.do_nothing}\n"
+        )
+
 
 class ComponentHandler:
     def __init__(self):
         self._compute_node = ComputeNode(id=settings.COMPUTE_NODE_ID)
         self._docker_client = docker.from_env()
-        self._login_to_ecr()
         self._exporter = Exporter()
-        self._exporter_thread = Thread(target=self._exporter.start, args = ())
-        self._exporter_thread.start() # TODO: i don't like this thread
+        self._exporter_thread = Thread(target=self._exporter.start, args=())
+        self._exporter_thread.start()  # TODO: i don't like this thread
         self._components = {}
         self._container_actions = ContainerActions()
-
-    def _login_to_ecr(self):
-        """ Login to ECR (this shouldn't be needed) """
-        ecr_client = boto3.client('ecr', region_name='us-east-1')
-        token = ecr_client.get_authorization_token()
-        username, password = base64.b64decode(token['authorizationData'][0]['authorizationToken']).decode().split(':')
-        registry = token['authorizationData'][0]['proxyEndpoint']
-        self._docker_client.login(username, password, registry=registry)
 
     def _get_component_tag(self, hub_component: HubComponent):
         name = hub_component.name.lower()
@@ -70,10 +74,19 @@ class ComponentHandler:
         component_tag = self._get_component_tag(component.hub_component)
 
         # pull docker image
-        image = self._docker_client.images.pull(
-            repository=settings.ECR_REPOSITORY, tag=component_tag
-        )
+        # TODO: Maybe add retry?
+        try:
+            image_file = component.hub_component.get_image_file()
+        except Exception:
+            logging.error(
+                f"Failed to get image url for component {component.name}"
+            )
+            return
 
+        self._docker_client.images.load(image_file)
+        image = self._docker_client.images.get(
+            f"{settings.ECR_REPOSITORY}:{component_tag}"
+        )
         # run docker image
         run_spec = json.dumps(
             {
@@ -90,11 +103,11 @@ class ComponentHandler:
                 "SPLIGHT_ACCESS_ID": settings.SPLIGHT_ACCESS_ID,
                 "SPLIGHT_SECRET_KEY": settings.SPLIGHT_SECRET_KEY,
                 "SPLIGHT_PLATFORM_API_HOST": settings.SPLIGHT_PLATFORM_API_HOST,
-                "SPLIGHT_GRPC_HOST": "integrationgrpc.splight-ai.com:443",
+                "SPLIGHT_GRPC_HOST": settings.SPLIGHT_GRPC_HOST,
                 "LOG_LEVEL": "0",
                 "COMPONENT_ID": component.id,
             },
-            network_mode='host', # TODO: delete after testing
+            network_mode="host",  # TODO: delete after testing
             remove=False,
             command=["python", "runner.py", "-r", run_spec],
         )
@@ -106,11 +119,17 @@ class ComponentHandler:
             container.stop()
             self._exporter.remove_container(component.id)
 
-
     def poll_forever(self):
         while True:
-            self._container_actions.update_lists(self._compute_node.components)
-            print(self._container_actions)
+            try:
+                self._container_actions.update_lists(
+                    self._compute_node.components
+                )
+            except Exception:
+                logging.error("Failed to update container actions")
+                time.sleep(API_POLL_INTERVAL)
+                continue
+            logging.debug(self._container_actions)
             for component in self._container_actions.run:
                 self._execute_run(component)
             for component in self._container_actions.stop:
@@ -123,5 +142,3 @@ class ComponentHandler:
     def stop_polling(self):
         self._exporter.stop()
         self._exporter_thread.join()
-
-            
