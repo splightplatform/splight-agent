@@ -8,11 +8,12 @@ packages = [{include = "splight_agent"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-splight-lib = "^3.0.8"
-splight-cli = "^3.0.10"
 docker = "^6.1.3"
 boto3 = "^1.28.12"
 ipython = "^8.14.0"
+furl = "^2.1.3"
+pyyaml = "^6.0.1"
+pydantic = "1.10.2"
 
 
 [build-system]

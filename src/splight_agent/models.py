@@ -1,31 +1,23 @@
-import gzip
 import logging
-import shutil
-from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Optional
 
 import requests
 from furl import furl
 from pydantic import BaseModel, PrivateAttr
-from splight_lib.auth.token import SplightAuthToken
-from splight_lib.restclient import SplightRestClient
 
 from splight_agent.settings import settings
 
 
 class RestClientModel(BaseModel):
-    _client: SplightRestClient = PrivateAttr()
     _base_url: furl = PrivateAttr()
+    _headers: Dict[str, str] = PrivateAttr()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._client = SplightRestClient()
-        token = SplightAuthToken(
-            access_key=settings.SPLIGHT_ACCESS_ID,
-            secret_key=settings.SPLIGHT_SECRET_KEY,
-        )
-        self._client.update_headers(token.header)
         self._base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
+        self._headers = {
+            'Authorization': f"Splight {settings.SPLIGHT_ACCESS_ID} {settings.SPLIGHT_SECRET_KEY}"
+        }
 
 
 # Component
@@ -36,25 +28,16 @@ class HubComponent(RestClientModel):
     version: str
 
     def get_image_file(self):
-        response = self._client.post(
+        response = requests.post(
             self._base_url / f"v2/hub/download/image_url/",
             json={"name": self.name, "version": self.version},
+            headers=self._headers
         )
-        # download file
-        if response.status_code != 200:
-            if response.json() and "detail" in response.json():
-                raise Exception(
-                    f"Error getting image url for component {self.name}: {response.json()['detail']}"
-                )
-            raise Exception(
-                f"Error getting image url for component {self.name}"
-            )
+        response.raise_for_status()
+
         logging.info("Downloding image file")
         response_file = requests.get(response.json()["url"])
-        if response_file.status_code != 200:
-            raise Exception(
-                f"Error downloading image for component {self.name}"
-            )
+        response_file.raise_for_status()
         return response_file.content
 
 
@@ -86,18 +69,12 @@ class Component(RestClientModel):
         )
 
     def update_status(self, status: str):
-        response = self._client.patch(
-            self._base_url / f"v2/engine/component/{self.id}/",
+        response = requests.patch(
+            self._base_url / f"v2/engine/component/components/{self.id}/",
             json={"deployment_status": status},
+            headers=self._headers
         )
-        if response.status_code != 200:
-            if response.json() and "detail" in response.json():
-                raise Exception(
-                    f"Error getting components for compute node {self.id}: {response.json()['detail']}"
-                )
-            raise Exception(
-                f"Error getting components for compute node {self.id}"
-            )
+        response.raise_for_status()
         self.deployment_status = status
         logging.info(f"Component {self.name} status updated to {status}")
 
@@ -112,15 +89,9 @@ class ComputeNode(RestClientModel):
     @property
     def components(self):
         # TODO: add error management
-        response = self._client.get(
-            self._base_url / f"v2/engine/compute_node/{self.id}/components/"
+        response = requests.get(
+            self._base_url / f"v2/engine/compute_node/{self.id}/components/",
+            headers=self._headers
         )
-        if response.status_code != 200:
-            if response.json() and "detail" in response.json():
-                raise Exception(
-                    f"Error getting components for compute node {self.id}: {response.json()['detail']}"
-                )
-            raise Exception(
-                f"Error getting components for compute node {self.id}"
-            )
+        response.raise_for_status()
         return [Component(**c) for c in response.json()]

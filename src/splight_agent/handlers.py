@@ -129,7 +129,7 @@ class ComponentHandler:
                 logging.error("Failed to update container actions")
                 time.sleep(API_POLL_INTERVAL)
                 continue
-            logging.debug(self._container_actions)
+            logging.info(self._container_actions)
             for component in self._container_actions.run:
                 self._execute_run(component)
             for component in self._container_actions.stop:
