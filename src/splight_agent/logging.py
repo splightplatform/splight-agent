@@ -38,7 +38,7 @@ class SplightFormatter(Formatter):
 
 
 class SplightLogger(Logger):
-    # TODO: fix lno always printing logging.py:88
+    # TODO: fix lno always printing logging.py:89
 
     def __init__(self, name: str = None) -> None:
         # this is to avoid adding handlers to root logger
