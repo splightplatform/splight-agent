@@ -6,15 +6,7 @@ from docker.models.containers import Container
 from splight_agent.models import Component
 
 
-class Singleton:
-    def __new__(cls, *args, **kw):
-        if not hasattr(cls, "_instance"):
-            org = super(Singleton, cls)
-            cls._instance = org.__new__(cls, *args, **kw)
-        return cls._instance
-
-
-class Exporter(Singleton):
+class Exporter():
     _running_components = {}
 
     def _get_component_status(self, container: Container):

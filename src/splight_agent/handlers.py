@@ -12,15 +12,12 @@ from splight_agent.settings import API_POLL_INTERVAL, settings
 
 
 class ContainerActions:
-    run: List[Component] = []
-    stop: List[Component] = []
-    restart: List[Component] = []
-    do_nothing: List[Component] = []
-
-    def __init__(self) -> None:
-        self._exporter = (
-            Exporter()
-        )  # I can do this since exporter is singleton
+    def __init__(self, exporter: Exporter) -> None:
+        self.run: List[Component] = []
+        self.stop: List[Component] = []
+        self.restart: List[Component] = []
+        self.do_nothing: List[Component] = []
+        self._exporter = exporter
 
     def empty_lists(self):
         self.run = []
@@ -64,7 +61,7 @@ class ComponentHandler:
         self._exporter_thread = Thread(target=self._exporter.start, args=())
         self._exporter_thread.start()  # TODO: i don't like this thread
         self._components = {}
-        self._container_actions = ContainerActions()
+        self._container_actions = ContainerActions(exporter=self._exporter)
 
     def _get_component_tag(self, hub_component: HubComponent):
         name = hub_component.name.lower()
