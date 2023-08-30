@@ -114,6 +114,23 @@ files = [
 ]
 
 [[package]]
+name = "concurrent-log-handler"
+version = "0.9.24"
+description = "RotatingFileHandler replacement with concurrency, gzip and Windows support"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "concurrent-log-handler-0.9.24.tar.gz", hash = "sha256:00f5646c6e5f6fc63654536f3b44aaa2b9b74b23245e14f5258ed91ce39d12e2"},
+    {file = "concurrent_log_handler-0.9.24-py3-none-any.whl", hash = "sha256:25c88399b23c1ed52549a836ca9666cfd61f2a6aae8bfc2a1a6427f989401d65"},
+]
+
+[package.dependencies]
+portalocker = ">=1.6.0"
+
+[package.extras]
+dev = ["black", "pytest", "ruff", "tox"]
+
+[[package]]
 name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
@@ -331,6 +348,25 @@ files = [
     {file = "pickleshare-0.7.5-py2.py3-none-any.whl", hash = "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"},
     {file = "pickleshare-0.7.5.tar.gz", hash = "sha256:87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca"},
 ]
+
+[[package]]
+name = "portalocker"
+version = "2.7.0"
+description = "Wraps the portalocker recipe for easy usage"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "portalocker-2.7.0-py2.py3-none-any.whl", hash = "sha256:a07c5b4f3985c3cf4798369631fb7011adb498e2a46d8440efc75a8f29a0f983"},
+    {file = "portalocker-2.7.0.tar.gz", hash = "sha256:032e81d534a88ec1736d03f780ba073f047a06c478b06e2937486f334e955c51"},
+]
+
+[package.dependencies]
+pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+docs = ["sphinx (>=1.7.1)"]
+redis = ["redis"]
+tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)"]
 
 [[package]]
 name = "prompt-toolkit"
@@ -673,4 +709,4 @@ test = ["websockets"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e2e5a57235b698d675bb2242182af0a744660dffe99a410084ecd9a6875eb14f"
+content-hash = "3d6955399e6e1c72867fb01ec73f85f15905dc8daa620c7aeb69e7549e5deaae"

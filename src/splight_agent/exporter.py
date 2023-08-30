@@ -1,16 +1,18 @@
-import logging
 import time
 
 from docker.models.containers import Container
 
+from splight_agent.logging import get_logger
 from splight_agent.models import Component
 
+logger = get_logger()
 
-class Exporter():
+
+class Exporter:
     _running_components = {}
 
     def _get_component_status(self, container: Container):
-        logging.info(f"Container {container.name} status: {container.status}")
+        logger.info(f"Container {container.name} status: {container.status}")
         status_map = {
             "created": "Pending",
             "restarting": "Pending",
@@ -31,7 +33,7 @@ class Exporter():
             "component": component,
             "container": container,
         }
-        logging.info(f"Container {component.name} added")
+        logger.info(f"Container {component.name} added")
 
     def get_container(self, component_id):
         data = self._running_components.get(component_id, None)
@@ -57,7 +59,7 @@ class Exporter():
                 # TODO: what should i do here?
                 pass
             self._running_components.pop(component_id, None)
-            logging.info(f"Container {component_id} removed")
+            logger.info(f"Container {component_id} removed")
 
     def _monitor_containers(self):
         for component_id, data in self._running_components.items():
@@ -71,12 +73,12 @@ class Exporter():
                 except Exception:
                     pass
                 self._running_components[component_id]["component"] = component
-                logging.info(
+                logger.info(
                     f"Component {component_id} status updated: {status}"
                 )
 
     def start(self):
-        logging.info("Exporter started")
+        logger.info("Exporter started")
         while True:
             self._monitor_containers()
             time.sleep(10)

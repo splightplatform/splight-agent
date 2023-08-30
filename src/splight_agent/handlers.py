@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 from threading import Thread
 from typing import List
@@ -7,8 +6,11 @@ from typing import List
 import docker
 
 from splight_agent.exporter import Exporter
+from splight_agent.logging import get_logger
 from splight_agent.models import Component, ComputeNode, HubComponent
 from splight_agent.settings import API_POLL_INTERVAL, settings
+
+logger = get_logger()
 
 
 class ContainerActions:
@@ -75,7 +77,7 @@ class ComponentHandler:
         try:
             image_file = component.hub_component.get_image_file()
         except Exception:
-            logging.error(
+            logger.error(
                 f"Failed to get image url for component {component.name}"
             )
             return
@@ -123,10 +125,10 @@ class ComponentHandler:
                     self._compute_node.components
                 )
             except Exception:
-                logging.error("Failed to update container actions")
+                logger.error("Failed to update container actions")
                 time.sleep(API_POLL_INTERVAL)
                 continue
-            logging.info(self._container_actions)
+            logger.info(self._container_actions)
             for component in self._container_actions.run:
                 self._execute_run(component)
             for component in self._container_actions.stop:

@@ -1,11 +1,13 @@
-import logging
 from typing import Any, Dict, List, Optional
 
 import requests
 from furl import furl
 from pydantic import BaseModel, PrivateAttr
 
+from splight_agent.logging import get_logger
 from splight_agent.settings import settings
+
+logger = get_logger(__name__)
 
 
 class RestClientModel(BaseModel):
@@ -16,7 +18,7 @@ class RestClientModel(BaseModel):
         super().__init__(*args, **kwargs)
         self._base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
         self._headers = {
-            'Authorization': f"Splight {settings.SPLIGHT_ACCESS_ID} {settings.SPLIGHT_SECRET_KEY}"
+            "Authorization": f"Splight {settings.SPLIGHT_ACCESS_ID} {settings.SPLIGHT_SECRET_KEY}"
         }
 
 
@@ -31,11 +33,11 @@ class HubComponent(RestClientModel):
         response = requests.post(
             self._base_url / f"v2/hub/download/image_url/",
             json={"name": self.name, "version": self.version},
-            headers=self._headers
+            headers=self._headers,
         )
         response.raise_for_status()
 
-        logging.info("Downloding image file")
+        logger.info("Downloding image file")
         response_file = requests.get(response.json()["url"])
         response_file.raise_for_status()
         return response_file.content
@@ -72,11 +74,11 @@ class Component(RestClientModel):
         response = requests.patch(
             self._base_url / f"v2/engine/component/components/{self.id}/",
             json={"deployment_status": status},
-            headers=self._headers
+            headers=self._headers,
         )
         response.raise_for_status()
         self.deployment_status = status
-        logging.info(f"Component {self.name} status updated to {status}")
+        logger.info(f"Component {self.name} status updated to {status}")
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
@@ -91,7 +93,7 @@ class ComputeNode(RestClientModel):
         # TODO: add error management
         response = requests.get(
             self._base_url / f"v2/engine/compute_node/{self.id}/components/",
-            headers=self._headers
+            headers=self._headers,
         )
         response.raise_for_status()
         return [Component(**c) for c in response.json()]
