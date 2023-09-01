@@ -1,0 +1,58 @@
+# used when a new feature has already been merged to master
+# this step creates a new tag in the github repository, pushes the release
+# version to pypi and deletes all dev versions
+name: Release
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  tag_version:
+    runs-on: ubuntu-latest
+    name: Create tag version on github repository
+    steps:
+      - name: Checkout to feature branch
+        uses: actions/checkout@v3
+
+      - name: Get version from feature branch
+        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+
+      - name: Create tag
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: Release ${{ env.CURRENT_VERSION }}
+          tag_name: ${{ env.CURRENT_VERSION }}
+
+  upload_agent_image:
+    runs-on: ubuntu-latest
+    name: Push agent image to ECR
+    steps:
+      - name: Checkout to feature branch
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push agent image
+        working-directory: .
+        run: |
+          docker-compose -f docker-compose.yml build splight-agent
+          docker tag splight-agent $AWS_ECR/splight-agent:${VERSION}
+          docker push $AWS_ECR/splight-agent:${VERSION}
+        env:
+          AWS_ECR: ${{secrets.AWS_ECR}}
+          VERSION: ${{env.CURRENT_VERSION}}
+
+  # upload_installer_script:
+
