@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from tkinter import E
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
 from furl import furl
@@ -6,14 +7,14 @@ from pydantic import BaseModel, PrivateAttr
 
 from splight_agent.logging import get_logger
 from splight_agent.settings import settings
-
+from enum import Enum
 logger = get_logger(__name__)
 
 
 class RestClientModel(BaseModel):
     _base_url: furl = PrivateAttr()
     _headers: Dict[str, str] = PrivateAttr()
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
@@ -43,17 +44,32 @@ class HubComponent(RestClientModel):
         return response_file.content
 
 
+class ContainerEventAction(str, Enum):
+    CREATE = "create"
+    START = "start"
+    STOP = "stop"
+
+
+class ComponentDeploymentStatus(str, Enum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    SUCCEEDED = "Succeeded"
+    FAILED = "Failed"
+    STOPPED = "Stopped"
+    UNKNOWN = "Unknown"
+
+
 class Component(RestClientModel):
     id: str
     name: str
     input: List[Dict[str, Any]]
     hub_component: HubComponent
     deployment_active: bool
-    deployment_status: str
+    deployment_status: ComponentDeploymentStatus
     deployment_capacity: str
     deployment_log_level: str
     deployment_restart_policy: str
-    deployment_updated_at: str
+    deployment_updated_at: Optional[str]
     compute_node: Optional[str]
 
     def __eq__(self, __value: object) -> bool:
@@ -70,6 +86,15 @@ class Component(RestClientModel):
             == __value.deployment_restart_policy
         )
 
+    def update(self):
+        response = requests.patch(
+            self._base_url / f"v2/engine/component/components/{self.id}/",
+            json=self.dict(exclude={"id", "name", "input", "hub_component"}),
+            headers=self._headers,            
+        )
+        response.raise_for_status()
+        logger.info(f"Component {self.name} saved")
+
     def update_status(self, status: str):
         response = requests.patch(
             self._base_url / f"v2/engine/component/components/{self.id}/",
@@ -78,7 +103,7 @@ class Component(RestClientModel):
         )
         response.raise_for_status()
         self.deployment_status = status
-        logger.info(f"Component {self.name} status updated to {status}")
+        logger.info(f"Component {self.id} status updated to {status}")
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
@@ -97,3 +122,18 @@ class ComputeNode(RestClientModel):
         )
         response.raise_for_status()
         return [Component(**c) for c in response.json()]
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def partial(model: Type[T]) -> Type[T]:
+    class OptionalModel(model):
+        ...
+
+    for field in OptionalModel.__fields__.values():
+        field.required = False
+
+    OptionalModel.__name__ = f"Optional{model.__name__}"
+
+    return OptionalModel

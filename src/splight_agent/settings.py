@@ -6,7 +6,7 @@ from pydantic import BaseSettings, Extra, root_validator
 from pydantic.env_settings import SettingsSourceCallable
 
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
-API_POLL_INTERVAL = 15
+API_POLL_INTERVAL = 10
 
 
 class Singleton:
