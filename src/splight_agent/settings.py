@@ -7,6 +7,7 @@ from pydantic.env_settings import SettingsSourceCallable
 
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
 API_POLL_INTERVAL = 10
+API_PING_INTERVAL = 60
 
 
 class Singleton:
