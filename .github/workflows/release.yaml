@@ -27,33 +27,33 @@ jobs:
           tag_name: ${{ env.CURRENT_VERSION }}
 
   release:
+    needs: tag_version
     runs-on: ubuntu-latest
-      needs: tag_version
-      name: Create release on github repository
-      steps:
-        - name: Checkout to feature branch
-          uses: actions/checkout@v3
-        - name: release
-          uses: actions/create-release@v1
-          id: create_release
-          with:
-            draft: false
-            prerelease: false
-            release_name: ${{ env.CURRENT_VERSION }}
-            tag_name: ${{ github.ref }}
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        - name: compress setup artifact files
-          run: tar -czf ./install_scripts.tar.gz ./install_scripts
-        - name: upload setup artifact files
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: ./install_scripts.tar.gz
-            asset_name: install_scripts-${{ env.CURRENT_VERSION }}.tar.gz
-            asset_content_type: application/gzip
+    name: Create release on github repository
+    steps:
+      - name: Checkout to feature branch
+        uses: actions/checkout@v3
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ env.CURRENT_VERSION }}
+          tag_name: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: compress setup artifact files
+        run: tar -czf ./install_scripts.tar.gz ./install_scripts
+      - name: upload setup artifact files
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./install_scripts.tar.gz
+          asset_name: install_scripts-${{ env.CURRENT_VERSION }}.tar.gz
+          asset_content_type: application/gzip
 
   upload_agent_image:
     runs-on: ubuntu-latest
