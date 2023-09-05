@@ -39,8 +39,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: ${{ env.CURRENT_VERSION }}
-          tag_name: ${{ github.ref }}
+          release_name: Release ${{ env.CURRENT_VERSION }}
+          tag_name: ${{ env.CURRENT_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: compress setup artifact files
@@ -77,8 +77,8 @@ jobs:
         working-directory: .
         run: |
           docker-compose -f docker-compose.yml build splight-agent
-          docker tag splight-agent ${SPLIGHT_AGENT_ECR}:${VERSION}
-          docker push ${SPLIGHT_AGENT_ECR}:${VERSION}
+          docker tag splight-agent $SPLIGHT_AGENT_ECR:$VERSION
+          docker push $SPLIGHT_AGENT_ECR:$VERSION
         env:
-          SPLIGHT_AGENT_ECR: ${{secrets.SPLIGHT_AGENT_ECR}}
-          VERSION: ${{env.CURRENT_VERSION}}
+          SPLIGHT_AGENT_ECR: ${{ secrets.SPLIGHT_AGENT_ECR }}
+          VERSION: ${{ env.CURRENT_VERSION }}
