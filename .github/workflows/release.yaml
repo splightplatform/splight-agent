@@ -82,7 +82,3 @@ jobs:
         env:
           AWS_ECR: ${{secrets.AWS_ECR}}
           VERSION: ${{env.CURRENT_VERSION}}
-
-  # upload_installer_script:
-
-
