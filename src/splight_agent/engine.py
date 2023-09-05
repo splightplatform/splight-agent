@@ -1,8 +1,7 @@
 import json
-import queue
 from functools import cached_property
 from threading import Thread
-from typing import Dict, List, Optional, Callable
+from typing import Optional, Callable
 
 import docker
 from docker.models.containers import Container
@@ -50,7 +49,7 @@ class Engine:
         return {
             EngineAction.ActionType.RUN: self.run,
             EngineAction.ActionType.STOP: self.stop,
-            EngineAction.ActionType.RESTART: self.stop,
+            EngineAction.ActionType.RESTART: self.restart,
         }
 
     @cached_property
@@ -63,19 +62,11 @@ class Engine:
             raise InvalidActionError(f"Invalid action type: {action.type}")
         handler(action.component)
 
-    def _handle_actions(self):
-        while True:
-            action = self._actions_queue.get()
-            self.handle_action(action)
-
     def start(self):
         """
         Launch the engine daemon thread
         """
         self._thread.start()
-
-    def enqueue_action(self, action: EngineAction) -> None:
-        self._actions_queue.put(action)
 
     @cached_property
     def _docker_client(self) -> docker.DockerClient:
@@ -146,3 +137,8 @@ class Engine:
         deployed_component.container.stop()
         deployed_component.container.remove()
         del self._deployed_components[component.id]
+
+    def restart(self, component: Component) -> None:
+        logger.info(f"Restarting component: {component.name}")
+        self.stop(component)
+        self.run(component)
