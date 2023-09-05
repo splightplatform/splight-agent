@@ -1,6 +1,7 @@
-import os
+from splight_agent.engine import Engine
+from splight_agent.dispatcher import Dispatcher
+from splight_agent.exporter import Exporter
 
-from splight_agent.handlers import ComponentHandler
 from splight_agent.logging import get_logger
 from splight_agent.settings import settings
 
@@ -10,11 +11,12 @@ if __name__ == "__main__":
     if not settings.COMPUTE_NODE_ID:
         raise Exception("COMPUTE_NODE_ID is not set")
 
-    component_handler = ComponentHandler()
+    exporter = Exporter()
+    exporter.start()
 
+    engine = Engine()
+    dispatcher = Dispatcher(engine)
     try:
-        component_handler.poll_forever()
+        dispatcher.start()
     except KeyboardInterrupt:
-        component_handler.stop_polling()
         logger.info("Agent stopped")
-        exit(0)
