@@ -9,7 +9,6 @@ on:
 
 jobs:
   release:
-    needs: tag_version
     runs-on: ubuntu-latest
     name: Create release on github repository
     steps:
