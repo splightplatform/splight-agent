@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout to feature branch
         uses: actions/checkout@v3
+      - name: Get version from feature branch
+        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
       - name: release
         uses: actions/create-release@v1
         id: create_release
@@ -72,6 +74,9 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Get version from feature branch
+        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
 
       - name: Build and push agent image
         working-directory: .
