@@ -1,84 +1,72 @@
-import time
+from functools import cached_property
+from threading import Thread
+from typing import Optional, Tuple
 
-from docker.models.containers import Container
+from docker import DockerClient, from_env
 
 from splight_agent.logging import get_logger
-from splight_agent.models import Component
+from splight_agent.models import (
+    Component,
+    ComponentDeploymentStatus,
+    ContainerEventAction,
+    partial,
+)
+from splight_agent.settings import settings
 
 logger = get_logger()
 
 
 class Exporter:
-    _running_components = {}
+    """
+    The exporter is responsible for notifying the platform about the deployment status of components
+    """
 
-    def _get_component_status(self, container: Container):
-        logger.info(f"Container {container.name} status: {container.status}")
-        status_map = {
-            "created": "Pending",
-            "restarting": "Pending",
-            "running": "Running",
-            "removing": "Stopped",
-            "paused": "Unknown",
-            # 'dead': 'Unknown',
+    def __init__(self) -> None:
+        self._client = from_env()
+        self._thread = Thread(target=self._run_event_loop, daemon=True)
+
+    _TRANSITION_MAP = {
+        ContainerEventAction.CREATE: ComponentDeploymentStatus.PENDING,
+        ContainerEventAction.START: ComponentDeploymentStatus.RUNNING,
+        ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
+    }
+
+    @property
+    def _filters(self) -> dict:
+        return {
+            "label": [f"AgentID={settings.COMPUTE_NODE_ID}", "ComponentID"],
+            "event": [a.value for a in ContainerEventAction],
         }
-        if container.status == "exited":
-            if container.attrs["State"]["ExitCode"] == 0:
-                return "Succeeded"
-            else:
-                return "Failed"
-        return status_map.get(container.status, "Unknown")
 
-    def add_container(self, component: Component, container: Container):
-        self._running_components[component.id] = {
-            "component": component,
-            "container": container,
-        }
-        logger.info(f"Container {component.name} added")
+    def _parse_event(self, event: dict) -> Tuple[str, ContainerEventAction]:
+        action = ContainerEventAction(event["Action"])
+        component_id: str = event["Actor"]["Attributes"]["ComponentID"]
+        return component_id, action
 
-    def get_container(self, component_id):
-        data = self._running_components.get(component_id, None)
-        if data:
-            return data["container"]
-        return None
+    def _get_component_from_event(self, event: dict) -> Optional[Component]:
+        """
+        Returns a partial Component object or None if the event is not parsable
+        """
+        try:
+            component_id, action = self._parse_event(event)
+            deployment_status = self._TRANSITION_MAP[action]
+        except (KeyError, ValueError) as e:
+            logger.warning(f"Could not parse event: {e}")
+            return None
+        return partial(Component)(
+            id=component_id,
+            deployment_status=deployment_status,
+        )
 
-    def get_component(self, component_id):
-        data = self._running_components.get(component_id, None)
-        if data:
-            return data["component"]
-        return None
+    def _run_event_loop(self) -> None:
+        for event in self._client.events(decode=True, filters=self._filters):
+            component = self._get_component_from_event(event)
+            if component:
+                component.update()
 
-    def remove_container(self, component_id):
-        data = self._running_components.get(component_id)
-        if data:
-            container = data["container"]
-            component = data["component"]
-            container.stop()
-            try:
-                component.update_status("Stopped")
-            except Exception:
-                # TODO: what should i do here?
-                pass
-            self._running_components.pop(component_id, None)
-            logger.info(f"Container {component_id} removed")
-
-    def _monitor_containers(self):
-        for component_id, data in self._running_components.items():
-            container = data["container"]
-            container.reload()
-            status = self._get_component_status(container)
-            component: Component = data["component"]
-            if component.deployment_status != status:
-                try:
-                    component.update_status(status)
-                except Exception:
-                    pass
-                self._running_components[component_id]["component"] = component
-                logger.info(
-                    f"Component {component_id} status updated: {status}"
-                )
-
-    def start(self):
+    def start(self) -> None:
+        """
+        Launch the exporter daemon thread
+        """
+        self._thread.start()
         logger.info("Exporter started")
-        while True:
-            self._monitor_containers()
-            time.sleep(10)

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
 from furl import furl
@@ -23,7 +24,7 @@ class RestClientModel(BaseModel):
 
 
 # Component
-### (only the fields that are needed for the agent)
+# (only the fields that are needed for the agent)
 class HubComponent(RestClientModel):
     id: str
     name: str
@@ -43,17 +44,32 @@ class HubComponent(RestClientModel):
         return response_file.content
 
 
+class ContainerEventAction(str, Enum):
+    CREATE = "create"
+    START = "start"
+    STOP = "stop"
+
+
+class ComponentDeploymentStatus(str, Enum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    SUCCEEDED = "Succeeded"
+    FAILED = "Failed"
+    STOPPED = "Stopped"
+    UNKNOWN = "Unknown"
+
+
 class Component(RestClientModel):
     id: str
     name: str
     input: List[Dict[str, Any]]
     hub_component: HubComponent
     deployment_active: bool
-    deployment_status: str
+    deployment_status: ComponentDeploymentStatus
     deployment_capacity: str
     deployment_log_level: str
     deployment_restart_policy: str
-    deployment_updated_at: str
+    deployment_updated_at: Optional[str]
     compute_node: Optional[str]
 
     def __eq__(self, __value: object) -> bool:
@@ -70,15 +86,14 @@ class Component(RestClientModel):
             == __value.deployment_restart_policy
         )
 
-    def update_status(self, status: str):
+    def update(self):
         response = requests.patch(
             self._base_url / f"v2/engine/component/components/{self.id}/",
-            json={"deployment_status": status},
+            json={"deployment_status": self.deployment_status},
             headers=self._headers,
         )
         response.raise_for_status()
-        self.deployment_status = status
-        logger.info(f"Component {self.name} status updated to {status}")
+        logger.info(f"Component {self.id} updated with status {self.deployment_status}")
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
@@ -97,3 +112,18 @@ class ComputeNode(RestClientModel):
         )
         response.raise_for_status()
         return [Component(**c) for c in response.json()]
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def partial(model: Type[T]) -> Type[T]:
+    class OptionalModel(model):
+        ...
+
+    for field in OptionalModel.__fields__.values():
+        field.required = False
+
+    OptionalModel.__name__ = f"Optional{model.__name__}"
+
+    return OptionalModel
