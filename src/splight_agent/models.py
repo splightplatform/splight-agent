@@ -93,7 +93,9 @@ class Component(RestClientModel):
             headers=self._headers,
         )
         response.raise_for_status()
-        logger.info(f"Component {self.id} updated with status {self.deployment_status}")
+        logger.info(
+            f"Component {self.id} updated with status {self.deployment_status}"
+        )
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"

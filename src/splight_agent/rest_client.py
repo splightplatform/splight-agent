@@ -5,7 +5,6 @@ from splight_agent.settings import settings
 
 
 class RestClient:
-
     @property
     def _base_url(self) -> furl:
         return furl(settings.SPLIGHT_PLATFORM_API_HOST)
@@ -17,4 +16,6 @@ class RestClient:
         }
 
     def post(self, path: str, data: dict) -> requests.Response:
-        return requests.post(self._base_url / path, json=data, headers=self.headers)
+        return requests.post(
+            self._base_url / path, json=data, headers=self.headers
+        )

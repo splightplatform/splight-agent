@@ -31,24 +31,27 @@ class Dispatcher:
     def _compute_action(self, component: Component) -> Optional[EngineAction]:
         deployed_component = self._engine.get_deployed_component(component.id)
         if component.deployment_active and not deployed_component:
+            return EngineAction(type=EngineActionType.RUN, component=component)
+        elif (
+            component.deployment_active
+            and deployed_component
+            and deployed_component != component
+        ):
             return EngineAction(
-                type=EngineActionType.RUN,
-                component=component
-            )
-        elif component.deployment_active and deployed_component and deployed_component != component:
-            return EngineAction(
-                type=EngineActionType.RESTART,
-                component=component
+                type=EngineActionType.RESTART, component=component
             )
         elif not component.deployment_active and deployed_component:
             return EngineAction(
-                type=EngineActionType.STOP,
-                component=component
+                type=EngineActionType.STOP, component=component
             )
         return None
 
     def _compute_actions(self, components: List[Component]):
-        return [action for component in components if (action := self._compute_action(component)) is not None]
+        return [
+            action
+            for component in components
+            if (action := self._compute_action(component)) is not None
+        ]
 
     def start(self):
         while True:
@@ -58,7 +61,9 @@ class Dispatcher:
                     try:
                         self._engine.handle_action(action)
                     except Exception as e:
-                        logger.error(f"The engine failed to handle action {action.type}:\n{e}\n Continuing...")
+                        logger.error(
+                            f"The engine failed to handle action {action.type}:\n{e}\n Continuing..."
+                        )
             except Exception as e:
                 logger.error(f"Failed to compute actions: {e}")
             finally:
