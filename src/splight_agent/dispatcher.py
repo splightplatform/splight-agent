@@ -24,10 +24,6 @@ class Dispatcher:
     def _compute_node(self) -> ComputeNode:
         return ComputeNode(id=settings.COMPUTE_NODE_ID)
 
-    def dispatch(self, action: EngineAction):
-        logger.info(f"Dispatching action: {action.type} {action.component.id} {action.component.name}")
-        self._engine.enqueue_action(action)
-
     def _execute_stop(self, component):
         container = self._exporter.get_container(component.id)
         if container:
