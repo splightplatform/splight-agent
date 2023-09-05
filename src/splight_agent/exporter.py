@@ -1,10 +1,9 @@
-from functools import cached_property
 from threading import Thread
 from typing import Optional, Tuple
 
-from docker import DockerClient, from_env
+from docker import from_env
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.models import (
     Component,
     ComponentDeploymentStatus,
@@ -13,7 +12,7 @@ from splight_agent.models import (
 )
 from splight_agent.settings import settings
 
-logger = get_logger()
+logger = SplightLogger()
 
 
 class Exporter:

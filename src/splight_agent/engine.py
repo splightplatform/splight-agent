@@ -6,11 +6,11 @@ from docker.models.containers import Container
 from pydantic import BaseModel
 from enum import Enum
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.models import Component, HubComponent
 from splight_agent.settings import settings
 
-logger = get_logger()
+logger = SplightLogger()
 
 
 class EngineActionType(str, Enum):

@@ -1,12 +1,12 @@
-from beacon import Beacon
-from dispatcher import Dispatcher
-from engine import Engine
-from exporter import Exporter
+from splight_agent.beacon import Beacon
+from splight_agent.dispatcher import Dispatcher
+from splight_agent.engine import Engine
+from splight_agent.exporter import Exporter
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
 
-logger = get_logger(__name__)
+logger = SplightLogger(__name__)
 
 
 class MissingComputeNodeIdError(Exception):

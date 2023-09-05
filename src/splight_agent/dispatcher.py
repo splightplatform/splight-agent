@@ -2,13 +2,13 @@ import time
 from typing import List, Optional
 
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.models import Component, ComputeNode
 from splight_agent.settings import settings
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 
-logger = get_logger()
+logger = SplightLogger()
 
 
 class Dispatcher:

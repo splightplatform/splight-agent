@@ -5,10 +5,10 @@ import requests
 from furl import furl
 from pydantic import BaseModel, PrivateAttr
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
 
-logger = get_logger(__name__)
+logger = SplightLogger(__name__)
 
 
 class RestClientModel(BaseModel):

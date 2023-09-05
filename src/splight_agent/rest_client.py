@@ -1,19 +1,17 @@
-from typing import Dict, TypeVar
-from pydantic import BaseModel
-from splight_agent.models import partial
-from splight_agent.settings import settings
-import furl
 import requests
+from furl import furl
+
+from splight_agent.settings import settings
 
 
 class RestClient:
 
     @property
-    def base_url(self) -> furl:
+    def _base_url(self) -> furl:
         return furl(settings.SPLIGHT_PLATFORM_API_HOST)
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Splight {settings.SPLIGHT_ACCESS_ID} {settings.SPLIGHT_SECRET_KEY}"
         }
