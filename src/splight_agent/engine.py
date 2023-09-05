@@ -1,10 +1,10 @@
 import json
-from typing import Optional, Callable
+from enum import Enum
+from typing import Callable, Optional
 
 import docker
 from docker.models.containers import Container
 from pydantic import BaseModel
-from enum import Enum
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import Component, HubComponent

@@ -1,7 +1,6 @@
 import time
 from threading import Thread
 
-
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.rest_client import RestClient
