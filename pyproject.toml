@@ -2,7 +2,7 @@
 name = "splight-agent"
 version = "0.1.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
 packages = [{include = "splight_agent"}]
 
