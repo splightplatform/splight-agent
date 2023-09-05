@@ -1,4 +1,4 @@
-from tkinter import E
+from enum import Enum
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
@@ -7,14 +7,14 @@ from pydantic import BaseModel, PrivateAttr
 
 from splight_agent.logging import get_logger
 from splight_agent.settings import settings
-from enum import Enum
+
 logger = get_logger(__name__)
 
 
 class RestClientModel(BaseModel):
     _base_url: furl = PrivateAttr()
     _headers: Dict[str, str] = PrivateAttr()
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
@@ -24,7 +24,7 @@ class RestClientModel(BaseModel):
 
 
 # Component
-### (only the fields that are needed for the agent)
+# (only the fields that are needed for the agent)
 class HubComponent(RestClientModel):
     id: str
     name: str
@@ -89,21 +89,11 @@ class Component(RestClientModel):
     def update(self):
         response = requests.patch(
             self._base_url / f"v2/engine/component/components/{self.id}/",
-            json=self.dict(exclude={"id", "name", "input", "hub_component"}),
-            headers=self._headers,            
-        )
-        response.raise_for_status()
-        logger.info(f"Component {self.name} saved")
-
-    def update_status(self, status: str):
-        response = requests.patch(
-            self._base_url / f"v2/engine/component/components/{self.id}/",
-            json={"deployment_status": status},
+            json={"deployment_status": self.deployment_status},
             headers=self._headers,
         )
         response.raise_for_status()
-        self.deployment_status = status
-        logger.info(f"Component {self.id} status updated to {status}")
+        logger.info(f"Component {self.id} updated with status {self.deployment_status}")
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
