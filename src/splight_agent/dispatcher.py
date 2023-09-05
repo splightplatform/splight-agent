@@ -4,9 +4,9 @@ from typing import List, Optional
 
 from splight_agent.logging import get_logger
 from splight_agent.models import Component, ComputeNode
-from splight_agent.settings import API_POLL_INTERVAL, settings
+from splight_agent.settings import settings
 
-from splight_agent.engine import Engine, EngineAction
+from splight_agent.engine import Engine, EngineAction, EngineActionType
 
 logger = get_logger()
 
@@ -24,10 +24,6 @@ class Dispatcher:
     def _compute_node(self) -> ComputeNode:
         return ComputeNode(id=settings.COMPUTE_NODE_ID)
 
-    def dispatch(self, action: EngineAction):
-        logger.info(f"Dispatching action: {action.type} {action.component.id} {action.component.name}")
-        self._engine.enqueue_action(action)
-
     def _execute_stop(self, component):
         container = self._exporter.get_container(component.id)
         if container:
@@ -38,17 +34,17 @@ class Dispatcher:
         deployed_component = self._engine.get_deployed_component(component.id)
         if component.deployment_active and not deployed_component:
             return EngineAction(
-                type=EngineAction.ActionType.RUN,
+                type=EngineActionType.RUN,
                 component=component
             )
         elif component.deployment_active and deployed_component and deployed_component != component:
             return EngineAction(
-                type=EngineAction.ActionType.RESTART,
+                type=EngineActionType.RESTART,
                 component=component
             )
         elif not component.deployment_active and deployed_component:
             return EngineAction(
-                type=EngineAction.ActionType.STOP,
+                type=EngineActionType.STOP,
                 component=component
             )
         return None
@@ -61,8 +57,11 @@ class Dispatcher:
             try:
                 actions = self._compute_actions(self._compute_node.components)
                 for action in actions:
-                    self._engine.handle_action(action)
+                    try:
+                        self._engine.handle_action(action)
+                    except Exception as e:
+                        logger.error(f"The engine failed to handle action {action.type}:\n{e}\n Continuing...")
             except Exception as e:
                 logger.error(f"Failed to compute actions: {e}")
             finally:
-                time.sleep(API_POLL_INTERVAL)
+                time.sleep(settings.API_POLL_INTERVAL)
