@@ -1,0 +1,34 @@
+name: Code Quality
+on: pull_request
+jobs:
+  black:
+    runs-on: ubuntu-latest
+    name: Black
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+        with:
+          options: "--check --diff"
+          version: "23.1.0"
+  isort:
+    runs-on: ubuntu-latest
+    name: Isort
+    steps:
+      - uses: actions/checkout@v3
+      - uses: isort/isort-action@master
+        with:
+          configuration: "--check-only --diff"
+          isortVersion: "5.12.0"
+  verify-version:
+    runs-on: ubuntu-latest
+    name: Verify version is a valid and is higher than previous version
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check version changed
+        run: |
+          previous_version=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')
+          new_version=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')
+          python .github/workflows/scripts/check_versions.py $previous_version $new_version
