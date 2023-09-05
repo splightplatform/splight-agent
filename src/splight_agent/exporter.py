@@ -20,19 +20,16 @@ class Exporter:
     """
     The exporter is responsible for notifying the platform about the deployment status of components
     """
+
+    def __init__(self) -> None:
+        self._client = from_env()
+        self._thread = Thread(target=self._run_event_loop, daemon=True)
+
     _TRANSITION_MAP = {
         ContainerEventAction.CREATE: ComponentDeploymentStatus.PENDING,
         ContainerEventAction.START: ComponentDeploymentStatus.RUNNING,
         ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
     }
-
-    @cached_property
-    def _client(self) -> DockerClient:
-        return from_env()
-
-    @cached_property
-    def _thread(self) -> Thread:
-        return Thread(target=self._run_event_loop, daemon=True)
 
     @property
     def _filters(self) -> dict:

@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 if __name__ == "__main__":
     if not settings.COMPUTE_NODE_ID:
         raise Exception("COMPUTE_NODE_ID is not set")
-    
+
     exporter = Exporter()
     exporter.start()
 

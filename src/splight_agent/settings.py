@@ -2,11 +2,10 @@ import os
 from typing import Any, Dict, Tuple
 
 import yaml
-from pydantic import BaseSettings, Extra, root_validator
+from pydantic import BaseSettings, Extra
 from pydantic.env_settings import SettingsSourceCallable
 
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
-API_POLL_INTERVAL = 10
 
 
 class Singleton:
@@ -35,6 +34,7 @@ class SplightSettings(BaseSettings, Singleton):
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""
     NAMESPACE: str = ""
+    API_POLL_INTERVAL: int = 10
 
     def configure(self, **params: Dict):
         self.parse_obj(params)
