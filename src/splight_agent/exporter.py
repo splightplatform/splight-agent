@@ -74,6 +74,7 @@ class Exporter:
         """
         Stop the exporter daemon thread
         """
-        self._thread.stop()
-        self._thread.join()
+        # TODO: fix this, couldn't find the proper way to stop the thread
+        # self._thread.stop()
+        # self._thread.join()
         logger.info("Exporter stopped")

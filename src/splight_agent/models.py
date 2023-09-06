@@ -105,7 +105,8 @@ class Component(RestClientModel):
         response.raise_for_status()
         data = response.json()
         for field in self.__fields__.values():
-            setattr(self, field.name, data[field.name])
+            if field.name in data:
+                setattr(self, field.name, data[field.name])
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"

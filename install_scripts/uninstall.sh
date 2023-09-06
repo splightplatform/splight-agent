@@ -10,7 +10,7 @@ print_colored_message() {
     printf "%s\n" "${color}${message}${NORMAL}"
 }
 
-docker stop splight-agent
+docker stop splight-agent --time 600
 docker rm splight-agent
 
 print_colored_message "$GREEN" "Splight agent uninstalled successfully."

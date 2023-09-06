@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import docker
 from docker.models.containers import Container
@@ -82,18 +82,19 @@ class Engine:
         self._deployed_components[component.id] = deployed_component
 
         component_tag = self._get_component_tag(component.hub_component)
-        # pull docker image
-        # TODO: Maybe add retry?
+        # # pull docker image
+        # # TODO: Maybe add retry?
+        # try:
+        #     image_file = component.hub_component.get_image_file()
+        # except Exception:
+        #     raise ImageError(
+        #         f"Failed to download image for component: {component.name}"
+        #     )
         try:
-            image_file = component.hub_component.get_image_file()
-        except Exception:
-            raise ImageError(
-                f"Failed to download image for component: {component.name}"
-            )
-        try:
-            self._docker_client.images.load(image_file)
+            # self._docker_client.images.load(image_file)
             image = self._docker_client.images.get(
-                f"{settings.ECR_REPOSITORY}:{component_tag}"
+                # f"{settings.ECR_REPOSITORY}:{component_tag}"
+                "609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-components:random-integration-2.1.0"
             )
         except Exception:
             raise ImageError(
@@ -152,15 +153,16 @@ class Engine:
         self.stop(component)
         self.run(component)
 
-    def stop_all(self) -> None:
+    def stop_all(self) -> List[Component]:
         """
         Stops all running components and returns the ids of the stopped components.
         """
-        stopped_components = []
-        for component in self._deployed_components.values():
+        stopped_components: List[Component] = []
+        deployed_components = self._deployed_components.copy()
+        for component in deployed_components.values():
             try:
                 self.stop(component)
-                stopped_components.append(component.id)
+                stopped_components.append(component)
             except ContainerExecutionError:
                 logger.warning(
                     f"Failed to stop component: {component.name}. "
