@@ -1,12 +1,18 @@
 import time
-from typing import List, Optional
+from typing import Optional, Protocol
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger
 from splight_agent.models import Component, ComputeNode
-from splight_agent.settings import settings
 
 logger = SplightLogger()
+
+
+class DispatcherSettings(Protocol):
+
+    @property
+    def API_POLL_INTERVAL(self) -> int:
+        ...
 
 
 class Dispatcher:
@@ -15,12 +21,10 @@ class Dispatcher:
     in order to keep the state of the compute node in sync with the platform's state
     """
 
-    def __init__(self, engine: Engine) -> None:
+    def __init__(self, compute_node: ComputeNode, engine: Engine, settings: DispatcherSettings) -> None:
+        self._settings = settings
+        self._compute_node = compute_node
         self._engine = engine
-
-    @property
-    def _compute_node(self) -> ComputeNode:
-        return ComputeNode(id=settings.COMPUTE_NODE_ID)
 
     def _execute_stop(self, component):
         container = self._exporter.get_container(component.id)
@@ -46,7 +50,7 @@ class Dispatcher:
             )
         return None
 
-    def _compute_actions(self, components: List[Component]):
+    def _compute_actions(self, components: list[Component]):
         return [
             action
             for component in components
@@ -67,4 +71,4 @@ class Dispatcher:
             except Exception as e:
                 logger.error(f"Failed to compute actions: {e}")
             finally:
-                time.sleep(settings.API_POLL_INTERVAL)
+                time.sleep(self._settings.API_POLL_INTERVAL)

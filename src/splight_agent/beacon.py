@@ -1,12 +1,19 @@
 import time
 from threading import Event, Thread
+from typing import Protocol
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.rest_client import RestClient
-from splight_agent.settings import settings
 
 logger = SplightLogger(__name__)
+
+
+class BeaconSettings(Protocol):
+
+    @property
+    def API_PING_INTERVAL(self) -> int:
+        ...
 
 
 class Beacon:
@@ -14,11 +21,12 @@ class Beacon:
     The beacon periodically pings the API to signal that the agent is still alive
     """
 
-    def __init__(self) -> None:
+    def __init__(self, compute_node: ComputeNode, settings: BeaconSettings) -> None:
+        self._settings = settings
         self._thread = Thread(target=self._ping_forever, daemon=True)
         self._stop = Event()
         self._client = RestClient()
-        self._compute_node = ComputeNode(id=settings.COMPUTE_NODE_ID)
+        self._compute_node = compute_node
 
     def _ping(self):
         logger.debug("Pinging API")
@@ -39,7 +47,7 @@ class Beacon:
             except Exception as e:
                 logger.warning(f"Could not ping API: {e}")
             finally:
-                time.sleep(settings.API_PING_INTERVAL)
+                time.sleep(self._settings.API_PING_INTERVAL)
 
     def start(self):
         self._thread.start()

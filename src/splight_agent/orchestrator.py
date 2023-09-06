@@ -3,25 +3,22 @@ from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
 from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
-from splight_agent.settings import settings
+from splight_agent.models import ComputeNode
+from splight_agent.settings import SplightSettings
 
 logger = SplightLogger(__name__)
 
 
-class MissingComputeNodeIdError(Exception):
-    ...
-
-
 class Orchestrator:
-    def __init__(self) -> None:
-        self._engine = Engine()
-        self._exporter = Exporter()
-        self._beacon = Beacon()
-        self._dispatcher = Dispatcher(self._engine)
+    _settings = SplightSettings()
 
-    def check_settings(self):
-        if not settings.COMPUTE_NODE_ID:
-            raise MissingComputeNodeIdError("COMPUTE_NODE_ID is not set")
+    def __init__(self) -> None:
+        compute_node = ComputeNode(id=self._settings.COMPUTE_NODE_ID)
+
+        self._engine = Engine(compute_node=compute_node, settings=self._settings)
+        self._beacon = Beacon(compute_node=compute_node, settings=self._settings)
+        self._dispatcher = Dispatcher(compute_node=compute_node, engine=self._engine, settings=self._settings)
+        self._exporter = Exporter(compute_node=compute_node)
 
     def start(self):
         self._exporter.start()
