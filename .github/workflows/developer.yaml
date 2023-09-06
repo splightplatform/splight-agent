@@ -36,4 +36,4 @@ jobs:
       - name: Check install.sh version changed
         run: |
           new_version=$(grep -E 'AGENT_VERSION' install_scripts/install.sh | awk -F'"' '{ print $2 }')
-          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version install_scripts/install.sh
+          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version install.sh

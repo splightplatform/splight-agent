@@ -49,7 +49,7 @@ print_colored_message "$GREEN" "$ART_LOGO"
 
 CONFIG_FILE=$HOME/.splight/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.1.2"
+AGENT_VERSION="0.2.2"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
