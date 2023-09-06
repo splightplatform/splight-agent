@@ -1,11 +1,11 @@
+from types import FrameType
+
 from splight_agent.beacon import Beacon
 from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
 from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
-
-from types import FrameType
 
 logger = SplightLogger(__name__)
 
@@ -40,5 +40,3 @@ class Orchestrator:
         logger.info("All components stopped")
         self._beacon.stop()
         self._exporter.stop()
-
-        

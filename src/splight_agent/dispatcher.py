@@ -3,7 +3,11 @@ from typing import List, Optional
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComponentDeploymentStatus, ComputeNode
+from splight_agent.models import (
+    Component,
+    ComponentDeploymentStatus,
+    ComputeNode,
+)
 from splight_agent.settings import settings
 
 logger = SplightLogger()
@@ -74,9 +78,11 @@ class Dispatcher:
         while True:
             for index, component in enumerate(components):
                 component.refresh()
-                if component.deployment_status == ComponentDeploymentStatus.STOPPED:
+                if (
+                    component.deployment_status
+                    == ComponentDeploymentStatus.STOPPED
+                ):
                     components.pop(index)
             if not components:
                 break
             time.sleep(settings.API_POLL_INTERVAL)
-            

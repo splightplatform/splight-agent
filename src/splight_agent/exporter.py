@@ -30,7 +30,6 @@ class Exporter:
         ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
     }
 
-
     @property
     def _filters(self) -> dict:
         return {

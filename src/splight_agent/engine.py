@@ -154,7 +154,7 @@ class Engine:
 
     def stop_all(self) -> None:
         """
-         Stops all running components and returns the ids of the stopped components.
+        Stops all running components and returns the ids of the stopped components.
         """
         stopped_components = []
         for component in self._deployed_components.values():
