@@ -1,6 +1,5 @@
 import time
-from threading import Thread, Event
-from tkinter import E
+from threading import Event, Thread
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
