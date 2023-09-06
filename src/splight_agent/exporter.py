@@ -30,6 +30,7 @@ class Exporter:
         ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
     }
 
+
     @property
     def _filters(self) -> dict:
         return {
@@ -69,3 +70,11 @@ class Exporter:
         """
         self._thread.start()
         logger.info("Exporter started")
+
+    def stop(self) -> None:
+        """
+        Stop the exporter daemon thread
+        """
+        self._thread.stop()
+        self._thread.join()
+        logger.info("Exporter stopped")

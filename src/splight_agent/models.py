@@ -97,6 +97,16 @@ class Component(RestClientModel):
             f"Component {self.id} updated with status {self.deployment_status}"
         )
 
+    def refresh(self):
+        response = requests.get(
+            self._base_url / f"v2/engine/component/components/{self.id}/",
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        for field in self.__fields__.values():
+            setattr(self, field.name, data[field.name])
+
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
 

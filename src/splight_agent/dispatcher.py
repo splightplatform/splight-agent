@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComputeNode
+from splight_agent.models import Component, ComponentDeploymentStatus, ComputeNode
 from splight_agent.settings import settings
 
 logger = SplightLogger()
@@ -68,3 +68,15 @@ class Dispatcher:
                 logger.error(f"Failed to compute actions: {e}")
             finally:
                 time.sleep(settings.API_POLL_INTERVAL)
+
+    def wait_for_components_to_stop(self, components: List[Component]):
+        # TODO: how can we add a timeout here?
+        while True:
+            for index, component in enumerate(components):
+                component.refresh()
+                if component.deployment_status == ComponentDeploymentStatus.STOPPED:
+                    components.pop(index)
+            if not components:
+                break
+            time.sleep(settings.API_POLL_INTERVAL)
+            

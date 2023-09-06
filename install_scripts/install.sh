@@ -10,7 +10,7 @@ print_colored_message() {
     local color="$1"
     local message="$2"
     
-    printf "%40s\n" "${color}${message}${NORMAL}"
+    printf "%s\n" "${color}${message}${NORMAL}"
 }
 
 ART_LOGO="                                                                                                                                                         

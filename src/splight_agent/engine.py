@@ -151,3 +151,19 @@ class Engine:
         logger.info(f"Restarting component: {component.name}")
         self.stop(component)
         self.run(component)
+
+    def stop_all(self) -> None:
+        """
+         Stops all running components and returns the ids of the stopped components.
+        """
+        stopped_components = []
+        for component in self._deployed_components.values():
+            try:
+                self.stop(component)
+                stopped_components.append(component.id)
+            except ContainerExecutionError:
+                logger.warning(
+                    f"Failed to stop component: {component.name}. "
+                    f"Skipping component..."
+                )
+        return stopped_components
