@@ -21,7 +21,6 @@ services:
     volumes:
       - .:/code
       - /var/run/docker.sock:/var/run/docker.sock
-      - $HOME/.aws/credentials:/root/.aws/credentials
       - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
       - LOG_LEVEL=10

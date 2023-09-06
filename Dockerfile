@@ -23,3 +23,5 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi --no-root
 
 COPY . /code
+
+ENTRYPOINT [ "python", "src/main.py" ]
