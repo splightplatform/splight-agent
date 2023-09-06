@@ -5,10 +5,10 @@ import requests
 from furl import furl
 from pydantic import BaseModel, PrivateAttr
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
 
-logger = get_logger(__name__)
+logger = SplightLogger(__name__)
 
 
 class RestClientModel(BaseModel):
@@ -93,7 +93,9 @@ class Component(RestClientModel):
             headers=self._headers,
         )
         response.raise_for_status()
-        logger.info(f"Component {self.id} updated with status {self.deployment_status}")
+        logger.info(
+            f"Component {self.id} updated with status {self.deployment_status}"
+        )
 
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
