@@ -1,47 +1,39 @@
 from enum import Enum
+from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-import requests
-from furl import furl
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel
 
 from splight_agent.logging import SplightLogger
-from splight_agent.settings import settings
+from splight_agent.rest_client import RestClient
 
 logger = SplightLogger(__name__)
 
 
-class RestClientModel(BaseModel):
-    _base_url: furl = PrivateAttr()
-    _headers: Dict[str, str] = PrivateAttr()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._base_url = furl(settings.SPLIGHT_PLATFORM_API_HOST)
-        self._headers = {
-            "Authorization": f"Splight {settings.SPLIGHT_ACCESS_ID} {settings.SPLIGHT_SECRET_KEY}"
-        }
+class APIObject(BaseModel):
+    @cached_property
+    def _rest_client(self) -> RestClient:
+        return RestClient()
 
 
 # Component
 # (only the fields that are needed for the agent)
-class HubComponent(RestClientModel):
+class HubComponent(APIObject):
     id: str
     name: str
     version: str
 
-    def get_image_file(self):
-        response = requests.post(
-            self._base_url / f"v2/hub/download/image_url/",
-            json={"name": self.name, "version": self.version},
-            headers=self._headers,
+    @property
+    def _image_link(self):
+        response = self._rest_client.post(
+            "v2/hub/download/image_url/",
+            data={"name": self.name, "version": self.version},
         )
         response.raise_for_status()
+        return response.json()["url"]
 
-        logger.info("Downloding image file")
-        response_file = requests.get(response.json()["url"])
-        response_file.raise_for_status()
-        return response_file.content
+    def get_image_file(self):
+        return self._rest_client.download(self._image_link)
 
 
 class ContainerEventAction(str, Enum):
@@ -59,7 +51,7 @@ class ComponentDeploymentStatus(str, Enum):
     UNKNOWN = "Unknown"
 
 
-class Component(RestClientModel):
+class Component(APIObject):
     id: str
     name: str
     input: List[Dict[str, Any]]
@@ -87,12 +79,10 @@ class Component(RestClientModel):
         )
 
     def update(self):
-        response = requests.patch(
-            self._base_url / f"v2/engine/component/components/{self.id}/",
-            json={"deployment_status": self.deployment_status},
-            headers=self._headers,
+        self._rest_client.patch(
+            f"v2/engine/component/components/{self.id}/",
+            data={"deployment_status": self.deployment_status},
         )
-        response.raise_for_status()
         logger.info(
             f"Component {self.id} updated with status {self.deployment_status}"
         )
@@ -101,18 +91,15 @@ class Component(RestClientModel):
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
 
 
-class ComputeNode(RestClientModel):
+class ComputeNode(APIObject):
     id: str
     name: Optional[str]
 
     @property
     def components(self):
-        # TODO: add error management
-        response = requests.get(
-            self._base_url / f"v2/engine/compute_node/{self.id}/components/",
-            headers=self._headers,
+        response = self._rest_client.get(
+            f"v2/engine/compute_node/{self.id}/components/",
         )
-        response.raise_for_status()
         return [Component(**c) for c in response.json()]
 
 

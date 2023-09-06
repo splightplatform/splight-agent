@@ -119,10 +119,12 @@ class Engine:
         )
 
     def _download_image(self, hub_component: HubComponent) -> bytes:
+        logger.info(f"Starting image download for component: {hub_component.name}")
         try:
             image_file = hub_component.get_image_file()
-        except Exception:
+        except Exception as e:
             # TODO: Maybe retry?
+            logger.error(e)
             raise ImageError(
                 f"Failed to download image for component: {hub_component.name}"
             )

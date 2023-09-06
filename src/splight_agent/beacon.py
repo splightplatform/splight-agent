@@ -30,7 +30,6 @@ class Beacon:
         self._compute_node = compute_node
 
     def _ping(self):
-        logger.debug("Pinging API")
         return self._client.post(
             f"v2/engine/compute_node/{self._compute_node.id}/healthcheck/", {}
         )
