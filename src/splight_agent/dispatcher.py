@@ -9,7 +9,6 @@ logger = SplightLogger()
 
 
 class DispatcherSettings(Protocol):
-
     @property
     def API_POLL_INTERVAL(self) -> int:
         ...
@@ -21,7 +20,12 @@ class Dispatcher:
     in order to keep the state of the compute node in sync with the platform's state
     """
 
-    def __init__(self, compute_node: ComputeNode, engine: Engine, settings: DispatcherSettings) -> None:
+    def __init__(
+        self,
+        compute_node: ComputeNode,
+        engine: Engine,
+        settings: DispatcherSettings,
+    ) -> None:
         self._settings = settings
         self._compute_node = compute_node
         self._engine = engine

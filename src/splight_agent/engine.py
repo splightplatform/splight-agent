@@ -31,7 +31,6 @@ class DeployedComponent(Component):
 
 
 class EngineSettings(Protocol):
-
     @property
     def NAMESPACE(self) -> str:
         ...
@@ -70,7 +69,9 @@ class Engine:
     The engine is responsible for handling the execution of components
     """
 
-    def __init__(self, compute_node: ComputeNode, settings: EngineSettings) -> None:
+    def __init__(
+        self, compute_node: ComputeNode, settings: EngineSettings
+    ) -> None:
         self._compute_node = compute_node
         self._settings = settings
         self._deployed_components: dict[str, DeployedComponent] = {}
@@ -86,7 +87,9 @@ class Engine:
 
     def _get_component_tag(self, hub_component: HubComponent):
         name = hub_component.name.lower()
-        return f"{name}-{self._settings.WORKSPACE_NAME}-{hub_component.version}"
+        return (
+            f"{name}-{self._settings.WORKSPACE_NAME}-{hub_component.version}"
+        )
 
     def _get_component_environment(self, component: Component) -> dict:
         return {
@@ -125,7 +128,9 @@ class Engine:
             )
         return image_file
 
-    def _load_image(self, image_file: bytes, component_name: str, component_tag: str) -> Image:
+    def _load_image(
+        self, image_file: bytes, component_name: str, component_tag: str
+    ) -> Image:
         try:
             self._docker_client.images.load(image_file)
             image = self._docker_client.images.get(
@@ -138,10 +143,14 @@ class Engine:
         return image
 
     def _run_container(
-            self, environment: dict, labels: dict, run_spec: str, image: Image, component: Component
+        self,
+        environment: dict,
+        labels: dict,
+        run_spec: str,
+        image: Image,
+        component: Component,
     ) -> Container:
         try:
-
             container = self._docker_client.containers.run(
                 image,
                 detach=True,
@@ -159,7 +168,9 @@ class Engine:
 
     def run(self, component: Component):
         # Add component to deployed components
-        deployed_component = DeployedComponent(**component.dict(), container=None)
+        deployed_component = DeployedComponent(
+            **component.dict(), container=None
+        )
         self._deployed_components[component.id] = deployed_component
 
         # Download image
@@ -169,7 +180,7 @@ class Engine:
         image = self._load_image(
             image_file=image_file,
             component_name=component.name,
-            component_tag=self._get_component_tag(component.hub_component)
+            component_tag=self._get_component_tag(component.hub_component),
         )
 
         # Run container
@@ -178,7 +189,7 @@ class Engine:
             labels=self._get_component_labels(component),
             run_spec=self._get_component_run_spec(component),
             image=image,
-            component=component
+            component=component,
         )
 
     def handle_action(self, action: EngineAction):

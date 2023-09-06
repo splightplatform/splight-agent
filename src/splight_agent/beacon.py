@@ -10,7 +10,6 @@ logger = SplightLogger(__name__)
 
 
 class BeaconSettings(Protocol):
-
     @property
     def API_PING_INTERVAL(self) -> int:
         ...
@@ -21,7 +20,9 @@ class Beacon:
     The beacon periodically pings the API to signal that the agent is still alive
     """
 
-    def __init__(self, compute_node: ComputeNode, settings: BeaconSettings) -> None:
+    def __init__(
+        self, compute_node: ComputeNode, settings: BeaconSettings
+    ) -> None:
         self._settings = settings
         self._thread = Thread(target=self._ping_forever, daemon=True)
         self._stop = Event()

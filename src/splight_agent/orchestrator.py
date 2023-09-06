@@ -15,9 +15,17 @@ class Orchestrator:
     def __init__(self) -> None:
         compute_node = ComputeNode(id=self._settings.COMPUTE_NODE_ID)
 
-        self._engine = Engine(compute_node=compute_node, settings=self._settings)
-        self._beacon = Beacon(compute_node=compute_node, settings=self._settings)
-        self._dispatcher = Dispatcher(compute_node=compute_node, engine=self._engine, settings=self._settings)
+        self._engine = Engine(
+            compute_node=compute_node, settings=self._settings
+        )
+        self._beacon = Beacon(
+            compute_node=compute_node, settings=self._settings
+        )
+        self._dispatcher = Dispatcher(
+            compute_node=compute_node,
+            engine=self._engine,
+            settings=self._settings,
+        )
         self._exporter = Exporter(compute_node=compute_node)
 
     def start(self):
