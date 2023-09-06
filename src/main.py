@@ -6,12 +6,13 @@ if __name__ == "__main__":
     orchestrator = Orchestrator()
     orchestrator.check_settings()
 
-    for signal in (
+    for signal_name in (
         signal.SIGABRT,
         signal.SIGINT,
         signal.SIGTERM,
-        signal.SIGKILL,
+        signal.SIGILL,
+        signal.SIGSEGV,
     ):
-        signal.signal(signal, orchestrator.kill)
+        signal.signal(signal_name, orchestrator.kill)
 
     orchestrator.start()
