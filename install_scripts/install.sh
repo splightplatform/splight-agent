@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Colors for prompts
 BLUE=$(tput setaf 4)
 RED=$(tput setaf 1)
@@ -12,6 +14,15 @@ print_colored_message() {
     
     printf "%s\n" "${color}${message}${NORMAL}"
 }
+
+handle_error() {   
+    local error_code="$1"
+
+    print_colored_message "$RED" "An error ocurred. Exiting."
+    exit "$error_code"
+}
+
+trap 'handle_error $?' ERR
 
 ART_LOGO="                                                                                                                                                         
                                                                                           
@@ -38,15 +49,15 @@ print_colored_message "$GREEN" "$ART_LOGO"
 
 CONFIG_FILE=$HOME/.splight/agent_config
 CONTAINER="splight-agent"
+AGENT_VERSION="0.2.2"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
 
-while getopts t:v: flag
+while getopts t: flag
 do
   case "${flag}" in
     t) TOKEN="${OPTARG}";;
-    v) AGENT_VERSION="${OPTARG}";;
   esac
 done
 
@@ -56,11 +67,6 @@ if ! [ -x "$(command -v docker)" ]; then
     exit 1
 fi
 
-# check if AGENT_VERSION is set
-if [ -z "$AGENT_VERSION" ]; then
-    print_colored_message "$RED" "AGENT_VERSION is not set. Please set AGENT_VERSION."
-    exit 1
-fi
 
 DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
@@ -90,8 +96,8 @@ docker run \
       --privileged \
       -id \
       --name $CONTAINER \
-      --mount source=$CONFIG_FILE,target=/root/.splight/agent_config \
-      --mount source=/var/run/docker.sock,target=/var/run/docker.sock \
+      -v $CONFIG_FILE:/root/.splight/agent_config \
+      -v /var/run/docker.sock:/var/run/docker.sock \
       -e LOG_LEVEL=$LOG_LEVEL \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE
