@@ -1,5 +1,6 @@
 import time
-from threading import Thread
+from threading import Thread, Event
+from tkinter import E
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
@@ -16,6 +17,7 @@ class Beacon:
 
     def __init__(self) -> None:
         self._thread = Thread(target=self._ping_forever, daemon=True)
+        self._stop = Event()
         self._client = RestClient()
         self._compute_node = ComputeNode(id=settings.COMPUTE_NODE_ID)
 
@@ -25,8 +27,14 @@ class Beacon:
             f"v2/engine/compute_node/{self._compute_node.id}/healthcheck/", {}
         )
 
+    @property
+    def stopped(self) -> bool:
+        return self._stop.is_set()
+
     def _ping_forever(self):
         while True:
+            if self.stopped:
+                break
             try:
                 self._ping()
             except Exception as e:
@@ -36,3 +44,7 @@ class Beacon:
 
     def start(self):
         self._thread.start()
+
+    def stop(self):
+        self._stop.set()
+        self._thread.join()
