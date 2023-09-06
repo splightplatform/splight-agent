@@ -1,16 +1,16 @@
 import json
-from typing import Optional, Callable
+from enum import Enum
+from typing import Callable, Optional
 
 import docker
 from docker.models.containers import Container
 from pydantic import BaseModel
-from enum import Enum
 
-from splight_agent.logging import get_logger
+from splight_agent.logging import SplightLogger
 from splight_agent.models import Component, HubComponent
 from splight_agent.settings import settings
 
-logger = get_logger()
+logger = SplightLogger()
 
 
 class EngineActionType(str, Enum):
@@ -70,7 +70,9 @@ class Engine:
         name = hub_component.name.lower()
         return f"{name}-{settings.WORKSPACE_NAME}-{hub_component.version}"
 
-    def get_deployed_component(self, component_id: str) -> Optional[DeployedComponent]:
+    def get_deployed_component(
+        self, component_id: str
+    ) -> Optional[DeployedComponent]:
         return self._deployed_components.get(component_id)
 
     def run(self, component: Component):
@@ -85,14 +87,18 @@ class Engine:
         try:
             image_file = component.hub_component.get_image_file()
         except Exception:
-            raise ImageError(f"Failed to download image for component: {component.name}")
+            raise ImageError(
+                f"Failed to download image for component: {component.name}"
+            )
         try:
             self._docker_client.images.load(image_file)
             image = self._docker_client.images.get(
                 f"{settings.ECR_REPOSITORY}:{component_tag}"
             )
         except Exception:
-            raise ImageError(f"Failed to load image for component: {component.name}")
+            raise ImageError(
+                f"Failed to load image for component: {component.name}"
+            )
         # run docker container
         try:
             run_spec = json.dumps(
@@ -120,11 +126,13 @@ class Engine:
                 labels={
                     "AgentID": settings.COMPUTE_NODE_ID,
                     "ComponentID": component.id,
-                    "StateHash": str(hash(json.dumps(component.input)))
-                }
+                    "StateHash": str(hash(json.dumps(component.input))),
+                },
             )
         except Exception:
-            raise ContainerExecutionError(f"Failed to run container for component: {component.name}")
+            raise ContainerExecutionError(
+                f"Failed to run container for component: {component.name}"
+            )
 
     def stop(self, component: Component) -> None:
         deployed_component = self.get_deployed_component(component.id)
@@ -135,7 +143,9 @@ class Engine:
             deployed_component.container.remove()
             del self._deployed_components[component.id]
         except Exception:
-            raise ContainerExecutionError(f"Failed to stop container for component: {component.name}")
+            raise ContainerExecutionError(
+                f"Failed to stop container for component: {component.name}"
+            )
 
     def restart(self, component: Component) -> None:
         logger.info(f"Restarting component: {component.name}")
