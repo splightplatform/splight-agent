@@ -3,25 +3,54 @@ from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
 from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
-from splight_agent.settings import settings
+from splight_agent.models import ComputeNode
+from splight_agent.settings import SplightSettings
 
 logger = SplightLogger(__name__)
 
 
-class MissingComputeNodeIdError(Exception):
-    ...
-
-
 class Orchestrator:
-    def __init__(self) -> None:
-        self._engine = Engine()
-        self._exporter = Exporter()
-        self._beacon = Beacon()
-        self._dispatcher = Dispatcher(self._engine)
+    _settings = SplightSettings()
 
-    def check_settings(self):
-        if not settings.COMPUTE_NODE_ID:
-            raise MissingComputeNodeIdError("COMPUTE_NODE_ID is not set")
+    @property
+    def _compute_node(self) -> ComputeNode:
+        return ComputeNode(id=self._settings.COMPUTE_NODE_ID)
+
+    def _create_engine(self) -> Engine:
+        return Engine(
+            compute_node=self._compute_node,
+            workspace_name=self._settings.WORKSPACE_NAME,
+            ecr_repository=self._settings.ECR_REPOSITORY,
+            componenent_environment={
+                "NAMESPACE": self._settings.NAMESPACE,
+                "SPLIGHT_ACCESS_ID": self._settings.SPLIGHT_ACCESS_ID,
+                "SPLIGHT_SECRET_KEY": self._settings.SPLIGHT_SECRET_KEY,
+                "SPLIGHT_PLATFORM_API_HOST": self._settings.SPLIGHT_PLATFORM_API_HOST,
+                "SPLIGHT_GRPC_HOST": self._settings.SPLIGHT_GRPC_HOST,
+            },
+        )
+
+    def _create_beacon(self) -> Beacon:
+        return Beacon(
+            compute_node=self._compute_node,
+            ping_interval=self._settings.API_PING_INTERVAL,
+        )
+
+    def _create_exporter(self) -> Exporter:
+        return Exporter(compute_node=self._compute_node)
+
+    def _create_dispatcher(self, engine: Engine) -> Dispatcher:
+        return Dispatcher(
+            compute_node=self._compute_node,
+            engine=engine,
+            poll_interval=self._settings.API_POLL_INTERVAL,
+        )
+
+    def __init__(self) -> None:
+        self._engine = self._create_engine()
+        self._beacon = self._create_beacon()
+        self._exporter = self._create_exporter()
+        self._dispatcher = self._create_dispatcher(self._engine)
 
     def start(self):
         self._exporter.start()

@@ -7,10 +7,10 @@ from splight_agent.logging import SplightLogger
 from splight_agent.models import (
     Component,
     ComponentDeploymentStatus,
+    ComputeNode,
     ContainerEventAction,
     partial,
 )
-from splight_agent.settings import settings
 
 logger = SplightLogger()
 
@@ -20,7 +20,8 @@ class Exporter:
     The exporter is responsible for notifying the platform about the deployment status of components
     """
 
-    def __init__(self) -> None:
+    def __init__(self, compute_node: ComputeNode) -> None:
+        self._compute_node = compute_node
         self._client = from_env()
         self._thread = Thread(target=self._run_event_loop, daemon=True)
 
@@ -33,7 +34,7 @@ class Exporter:
     @property
     def _filters(self) -> dict:
         return {
-            "label": [f"AgentID={settings.COMPUTE_NODE_ID}", "ComponentID"],
+            "label": [f"AgentID={self._compute_node.id}", "ComponentID"],
             "event": [a.value for a in ContainerEventAction],
         }
 
