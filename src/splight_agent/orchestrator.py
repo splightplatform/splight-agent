@@ -1,3 +1,4 @@
+import sys
 from types import FrameType
 
 from splight_agent.beacon import Beacon
@@ -6,7 +7,6 @@ from splight_agent.engine import Engine
 from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
-import sys
 
 logger = SplightLogger(__name__)
 
