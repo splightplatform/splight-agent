@@ -2,6 +2,7 @@ from io import BytesIO
 
 import requests
 from furl import furl
+
 from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
 
