@@ -74,7 +74,6 @@ class Dispatcher:
                 time.sleep(settings.API_POLL_INTERVAL)
 
     def wait_for_components_to_stop(self, components: List[Component]):
-        # TODO: how can we add a timeout here?
         while True:
             for index, component in enumerate(components):
                 component.refresh()
