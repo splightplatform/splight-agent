@@ -9,12 +9,6 @@ from splight_agent.rest_client import RestClient
 logger = SplightLogger(__name__)
 
 
-class BeaconSettings(Protocol):
-    @property
-    def API_PING_INTERVAL(self) -> int:
-        ...
-
-
 class Beacon:
     """
     The beacon periodically pings the API to signal that the agent is still alive
