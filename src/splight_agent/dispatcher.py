@@ -8,12 +8,6 @@ from splight_agent.models import Component, ComputeNode
 logger = SplightLogger()
 
 
-class DispatcherSettings(Protocol):
-    @property
-    def API_POLL_INTERVAL(self) -> int:
-        ...
-
-
 class Dispatcher:
     """
     The dispatcher is responsible for polling the API and dispatching actions to the engine
@@ -24,9 +18,9 @@ class Dispatcher:
         self,
         compute_node: ComputeNode,
         engine: Engine,
-        settings: DispatcherSettings,
+        poll_interval: int,
     ) -> None:
-        self._settings = settings
+        self._poll_interval = poll_interval
         self._compute_node = compute_node
         self._engine = engine
 
@@ -75,4 +69,4 @@ class Dispatcher:
             except Exception as e:
                 logger.error(f"Failed to compute actions: {e}")
             finally:
-                time.sleep(self._settings.API_POLL_INTERVAL)
+                time.sleep(self._poll_interval)

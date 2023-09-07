@@ -12,21 +12,45 @@ logger = SplightLogger(__name__)
 class Orchestrator:
     _settings = SplightSettings()
 
-    def __init__(self) -> None:
-        compute_node = ComputeNode(id=self._settings.COMPUTE_NODE_ID)
+    @property
+    def _compute_node(self) -> ComputeNode:
+        return ComputeNode(id=self._settings.COMPUTE_NODE_ID)
 
-        self._engine = Engine(
-            compute_node=compute_node, settings=self._settings
+    def _create_engine(self) -> Engine:
+        return Engine(
+            compute_node=self._compute_node,
+            workspace_name=self._settings.WORKSPACE_NAME,
+            ecr_repository=self._settings.ECR_REPOSITORY,
+            componenent_environment={
+                "NAMESPACE": self._settings.NAMESPACE,
+                "SPLIGHT_ACCESS_ID": self._settings.SPLIGHT_ACCESS_ID,
+                "SPLIGHT_SECRET_KEY": self._settings.SPLIGHT_SECRET_KEY,
+                "SPLIGHT_PLATFORM_API_HOST": self._settings.SPLIGHT_PLATFORM_API_HOST,
+                "SPLIGHT_GRPC_HOST": self._settings.SPLIGHT_GRPC_HOST,
+            },
         )
-        self._beacon = Beacon(
-            compute_node=compute_node, settings=self._settings
+
+    def _create_beacon(self) -> Beacon:
+        return Beacon(
+            compute_node=self._compute_node,
+            ping_interval=self._settings.API_PING_INTERVAL,
         )
-        self._dispatcher = Dispatcher(
-            compute_node=compute_node,
-            engine=self._engine,
-            settings=self._settings,
+
+    def _create_exporter(self) -> Exporter:
+        return Exporter(compute_node=self._compute_node)
+
+    def _create_dispatcher(self, engine: Engine) -> Dispatcher:
+        return Dispatcher(
+            compute_node=self._compute_node,
+            engine=engine,
+            poll_interval=self._settings.API_POLL_INTERVAL,
         )
-        self._exporter = Exporter(compute_node=compute_node)
+
+    def __init__(self) -> None:
+        self._engine = self._create_engine()
+        self._beacon = self._create_beacon()
+        self._exporter = self._create_exporter()
+        self._dispatcher = self._create_dispatcher(self._engine)
 
     def start(self):
         self._exporter.start()
