@@ -20,10 +20,8 @@ class Beacon:
     The beacon periodically pings the API to signal that the agent is still alive
     """
 
-    def __init__(
-        self, compute_node: ComputeNode, settings: BeaconSettings
-    ) -> None:
-        self._settings = settings
+    def __init__(self, compute_node: ComputeNode, ping_interval: int) -> None:
+        self._ping_interval = ping_interval
         self._thread = Thread(target=self._ping_forever, daemon=True)
         self._stop = Event()
         self._client = RestClient()
@@ -47,7 +45,7 @@ class Beacon:
             except Exception as e:
                 logger.warning(f"Could not ping API: {e}")
             finally:
-                time.sleep(self._settings.API_PING_INTERVAL)
+                time.sleep(self._ping_interval)
 
     def start(self):
         self._thread.start()
