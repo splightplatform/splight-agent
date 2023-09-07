@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Save previouse version
+      - name: Save previous version
         run: echo "PREVIOUS_VERSION=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
       - name: Check pyproject version changed
         run: |

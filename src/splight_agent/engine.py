@@ -82,19 +82,18 @@ class Engine:
         self._deployed_components[component.id] = deployed_component
 
         component_tag = self._get_component_tag(component.hub_component)
-        # # pull docker image
-        # # TODO: Maybe add retry?
-        # try:
-        #     image_file = component.hub_component.get_image_file()
-        # except Exception:
-        #     raise ImageError(
-        #         f"Failed to download image for component: {component.name}"
-        #     )
+        # pull docker image
+        # TODO: Maybe add retry?
         try:
-            # self._docker_client.images.load(image_file)
+            image_file = component.hub_component.get_image_file()
+        except Exception:
+            raise ImageError(
+                f"Failed to download image for component: {component.name}"
+            )
+        try:
+            self._docker_client.images.load(image_file)
             image = self._docker_client.images.get(
-                # f"{settings.ECR_REPOSITORY}:{component_tag}"
-                "609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-components:random-integration-2.1.0"
+                f"{settings.ECR_REPOSITORY}:{component_tag}"
             )
         except Exception:
             raise ImageError(
