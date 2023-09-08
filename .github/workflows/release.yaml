@@ -1,6 +1,6 @@
 # used when a new feature has already been merged to master
 # this step creates a new tag in the github repository, pushes the release
-# version to pypi and deletes all dev versions
+# and uploads the install scripts to the release
 name: Release
 on:
   push:

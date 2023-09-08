@@ -27,8 +27,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Check version changed
+      - name: Save previous version
+        run: echo "PREVIOUS_VERSION=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+      - name: Check pyproject version changed
         run: |
-          previous_version=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')
           new_version=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')
-          python .github/workflows/scripts/check_versions.py $previous_version $new_version
+          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version pyproject.toml
+      - name: Check install.sh version changed
+        run: |
+          new_version=$(grep -E 'AGENT_VERSION' install_scripts/install.sh | awk -F'"' '{ print $2 }')
+          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version install.sh

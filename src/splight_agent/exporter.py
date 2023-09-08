@@ -70,3 +70,10 @@ class Exporter:
         """
         self._thread.start()
         logger.info("Exporter started")
+
+    def stop(self) -> None:
+        """
+        Stop the exporter daemon thread
+        TODO: find a proper way to stop the thread
+        """
+        logger.info("Exporter stopped")
