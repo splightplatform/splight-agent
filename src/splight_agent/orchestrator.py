@@ -1,3 +1,5 @@
+import sys
+from types import FrameType
 from splight_agent.beacon import Beacon
 from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
@@ -55,7 +57,15 @@ class Orchestrator:
     def start(self):
         self._exporter.start()
         self._beacon.start()
-        try:
-            self._dispatcher.start()
-        except KeyboardInterrupt:
-            logger.info("Agent stopped")
+        self._dispatcher.start()
+
+    def kill(self, sig: int, frame: FrameType):
+        logger.info(f"Received signal {sig}. Gracefully stopping Agent...")
+        stopped_components = self._engine.stop_all()
+        logger.info(f"Stopped {len(stopped_components)} components")
+        logger.info("Waiting for components to be stopped in the platform...")
+        self._dispatcher.wait_for_components_to_stop(stopped_components)
+        logger.info("All components stopped")
+        self._beacon.stop()
+        self._exporter.stop()
+        sys.exit(0)

@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Callable, Optional, TypedDict
+from typing import Callable, List, Optional, TypedDict
 
 import docker
 from docker.models.containers import Container, Image
@@ -197,3 +197,20 @@ class Engine:
         self, component_id: str
     ) -> Optional[DeployedComponent]:
         return self._deployed_components.get(component_id)
+
+    def stop_all(self) -> List[Component]:
+        """
+        Stops all running components and returns the ids of the stopped components.
+        """
+        stopped_components: List[Component] = []
+        deployed_components = self._deployed_components.copy()
+        for component in deployed_components.values():
+            try:
+                self.stop(component)
+                stopped_components.append(component)
+            except ContainerExecutionError:
+                logger.warning(
+                    f"Failed to stop component: {component.name}. "
+                    f"Skipping component..."
+                )
+        return stopped_components

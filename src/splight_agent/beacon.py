@@ -26,13 +26,9 @@ class Beacon:
             f"v2/engine/compute_node/{self._compute_node.id}/healthcheck/", {}
         )
 
-    @property
-    def stopped(self) -> bool:
-        return self._stop.is_set()
-
     def _ping_forever(self):
         while True:
-            if self.stopped:
+            if self._stop.is_set():
                 break
             try:
                 self._ping()
