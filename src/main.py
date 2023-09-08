@@ -12,7 +12,6 @@ SIGNALS_TO_HANDLE = (
 
 if __name__ == "__main__":
     orchestrator = Orchestrator()
-    orchestrator.check_settings()
 
     for signal_name in SIGNALS_TO_HANDLE:
         signal.signal(signal_name, orchestrator.kill)

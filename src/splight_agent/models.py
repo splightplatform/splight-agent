@@ -87,6 +87,16 @@ class Component(APIObject):
             f"Component {self.id} updated with status {self.deployment_status}"
         )
 
+    def refresh(self):
+        response = self._rest_client.get(
+            f"v2/engine/component/components/{self.id}/"
+        )
+        response.raise_for_status()
+        data = response.json()
+        for field in self.__fields__.values():
+            if field.name in data:
+                setattr(self, field.name, data[field.name])
+
     def __str__(self) -> str:
         return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
 
