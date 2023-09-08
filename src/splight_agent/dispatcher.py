@@ -3,7 +3,11 @@ from typing import List, Optional, Protocol
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComponentDeploymentStatus, ComputeNode
+from splight_agent.models import (
+    Component,
+    ComponentDeploymentStatus,
+    ComputeNode,
+)
 
 logger = SplightLogger()
 

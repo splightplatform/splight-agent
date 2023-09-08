@@ -5,6 +5,8 @@ from pkg_resources import parse_version as parse
 
 class VersionError(Exception):
     """Raised when the new version is not greater than the old version."""
+
+
 import sys
 
 from pkg_resources import parse_version as parse

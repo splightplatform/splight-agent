@@ -1,5 +1,6 @@
 import sys
 from types import FrameType
+
 from splight_agent.beacon import Beacon
 from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
