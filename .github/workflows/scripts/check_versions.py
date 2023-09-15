@@ -1,19 +1,19 @@
-import sys
 import operator
+import sys
+
 
 class VersionError(Exception):
     """Raised when the compared values don't match."""
 
-OPERATORS = {
-    'gt': operator.gt,
-    'lt': operator.lt,
-    'eq': operator.eq
-}
+
+OPERATORS = {"gt": operator.gt, "lt": operator.lt, "eq": operator.eq}
+
 
 class VersionObject:
     def __init__(self, version_string):
-        self.parsed = tuple(map(int, version_string.split('.')))
+        self.parsed = tuple(map(int, version_string.split(".")))
         self.version = version_string
+
 
 if __name__ == "__main__":
     """Compares versions between the current and old.
@@ -43,4 +43,6 @@ if __name__ == "__main__":
                 f"version {version2.version}"
             )
     else:
-        raise ValueError(f"Invalid operator {operator_str}. Only gt, lt, eq are allowed.")
+        raise ValueError(
+            f"Invalid operator {operator_str}. Only gt, lt, eq are allowed."
+        )
