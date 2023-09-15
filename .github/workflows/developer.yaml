@@ -27,13 +27,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Save previous version
-        run: echo "PREVIOUS_VERSION=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+      - name: Save version values
+        run: |
+          echo "PREVIOUS_VERSION=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+          echo "PYPROJECT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+          echo "INSTALL_VERSION=$(grep -E 'AGENT_VERSION' install_scripts/install.sh | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV
       - name: Check pyproject version changed
-        run: |
-          new_version=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')
-          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version pyproject.toml
-      - name: Check install.sh version changed
-        run: |
-          new_version=$(grep -E 'AGENT_VERSION' install_scripts/install.sh | awk -F'"' '{ print $2 }')
-          python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} $new_version install.sh
+        run: python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} lt ${{ env.PYPROJECT_VERSION }}
+      - name: Check install.sh is same version as pyproject
+        run: python .github/workflows/scripts/check_versions.py ${{ env.PYPROJECT_VERSION }} eq ${{ env.INSTALL_VERSION }}
