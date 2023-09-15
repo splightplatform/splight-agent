@@ -49,7 +49,7 @@ print_colored_message "$GREEN" "$ART_LOGO"
 
 CONFIG_FILE=$HOME/.splight/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.2.4"
+AGENT_VERSION="0.2.5"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -77,11 +77,12 @@ fi
 
 COMPUTE_NODE_ID=$(grep COMPUTE_NODE_ID $CONFIG_FILE) && COMPUTE_NODE_ID=${COMPUTE_NODE_ID//*COMPUTE_NODE_ID: /}
 
-if [ -z "$COMPUTE_NODE_ID" ]; then
-    # Check if TOKEN argument is provided, or prompt for input
-    if [ -z "$TOKEN" ]; then
+if [ -z "$TOKEN" ]; then
+    if [ -z "$COMPUTE_NODE_ID" ]; then
         read -p "Enter agent TOKEN: " TOKEN
+        echo $TOKEN | base64 --decode > $CONFIG_FILE
     fi
+else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
