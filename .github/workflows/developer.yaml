@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "PREVIOUS_VERSION=$(git show origin/master:pyproject.toml | grep -E 'version' | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
           echo "PYPROJECT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
-          echo "INSTALL_VERSION=$(grep -E 'AGENT_VERSION' install_scripts/install.sh | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+          echo "INSTALL_VERSION=$(grep -E 'AGENT_VERSION=' install_scripts/install.sh | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
       - name: Check pyproject version changed
         run: python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} lt ${{ env.PYPROJECT_VERSION }}
       - name: Check install.sh is same version as pyproject
