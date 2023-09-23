@@ -1,6 +1,7 @@
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
+import json
 
 from pydantic import BaseModel
 
@@ -64,21 +65,21 @@ class Component(APIObject):
     deployment_updated_at: Optional[str]
     compute_node: Optional[str]
 
-    def __eq__(self, __value: object) -> bool:
-        """only comparing attributes that are important for the deployment"""
-        if not isinstance(__value, Component):
-            return NotImplemented
-
-        return (
-            self.input == __value.input
-            and self.deployment_active == __value.deployment_active
-            and self.deployment_capacity == __value.deployment_capacity
-            and self.deployment_log_level == __value.deployment_log_level
-            and self.deployment_restart_policy
-            == __value.deployment_restart_policy
+    def get_deployment_hash(self) -> str:
+        return str(
+            hash(
+                json.dumps(
+                    {
+                        "input": self.input,
+                        "capacity": self.deployment_capacity,
+                        "log_level": self.deployment_log_level,
+                        "restart_policy": self.deployment_restart_policy,
+                    }
+                )
+            )
         )
 
-    def update(self):
+    def update_status(self):
         self._rest_client.patch(
             f"v2/engine/component/components/{self.id}/",
             data={"deployment_status": self.deployment_status},

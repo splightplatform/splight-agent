@@ -62,7 +62,7 @@ class Exporter:
         for event in self._client.events(decode=True, filters=self._filters):
             component = self._get_component_from_event(event)
             if component:
-                component.update()
+                component.update_status()
 
     def start(self) -> None:
         """

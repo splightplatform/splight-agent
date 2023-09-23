@@ -41,9 +41,9 @@ class Dispatcher:
         elif (
             component.deployment_active
             and deployed_component
-            and deployed_component != component
+            and deployed_component.deployment_hash != component.get_deployment_hash()
         ):
-            return EngineAction(
+            return EngineAction(   
                 type=EngineActionType.RESTART, component=component
             )
         elif not component.deployment_active and deployed_component:

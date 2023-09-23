@@ -23,8 +23,10 @@ class EngineAction(BaseModel):
     component: Component
 
 
-class DeployedComponent(Component):
-    container: Optional[Container]
+class DeployedComponent(BaseModel):
+    container: Container
+    component_id: str
+    deployment_hash: str
 
     class Config:
         arbitrary_types_allowed = True
@@ -70,7 +72,6 @@ class Engine:
         self._workspace_name = workspace_name
         self._ecr_repository = ecr_repository
         self._component_environment = componenent_environment
-        self._deployed_components: dict[str, DeployedComponent] = {}
         self._docker_client = docker.from_env()
 
     @property
@@ -115,9 +116,9 @@ class Engine:
 
     def _run_container(
         self, image: Image, environment: dict, runspec: dict, labels: dict
-    ) -> Container:
+    ) -> None:
         try:
-            container = self._docker_client.containers.run(
+            _ = self._docker_client.containers.run(
                 image,
                 detach=True,
                 environment=environment,
@@ -130,15 +131,8 @@ class Engine:
             raise ContainerExecutionError(
                 f"Failed to run container for component: {runspec['name']}"
             )
-        return container
 
     def run(self, component: Component):
-        # Add component to deployed components
-        deployed_component = DeployedComponent(
-            **component.dict(), container=None
-        )
-        self._deployed_components[component.id] = deployed_component
-
         # Download image
         image_file = self._download_image(component.hub_component)
 
@@ -150,7 +144,7 @@ class Engine:
         )
 
         # Run container
-        deployed_component.container = self._run_container(
+        self._run_container(
             image=image,
             environment={
                 **self._component_environment,
@@ -160,7 +154,8 @@ class Engine:
             labels={
                 "AgentID": self._compute_node.id,
                 "ComponentID": component.id,
-                "StateHash": str(hash(json.dumps(component.input))),
+                "DeploymentHash": component.get_deployment_hash(),
+                "ComponentDeploymentStatus": component.deployment_status,
             },
             runspec={
                 "name": component.hub_component.name,
@@ -182,7 +177,6 @@ class Engine:
         try:
             deployed_component.container.stop()
             deployed_component.container.remove()
-            del self._deployed_components[component.id]
         except Exception:
             raise ContainerExecutionError(
                 f"Failed to stop container for component: {component.name}"
@@ -196,7 +190,21 @@ class Engine:
     def get_deployed_component(
         self, component_id: str
     ) -> Optional[DeployedComponent]:
-        return self._deployed_components.get(component_id)
+        container = self._docker_client.containers.list(
+            filters={
+                "label": [
+                    f"AgentID={self._compute_node.id}",
+                    f"ComponentID={component_id}",
+                ]
+            }
+        )
+        if container:
+            return DeployedComponent(
+                container=container[0],
+                component_id=component_id,
+                deployment_hash=container[0].labels["DeploymentHash"],
+            )
+        return None   
 
     def stop_all(self) -> List[Component]:
         """
