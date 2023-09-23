@@ -2,8 +2,10 @@ from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
 import json
+from docker.models.containers import Container
 
 from pydantic import BaseModel
+from splight_agent.constants import EngineActionType
 
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
@@ -40,7 +42,8 @@ class HubComponent(APIObject):
 class ContainerEventAction(str, Enum):
     CREATE = "create"
     START = "start"
-    STOP = "stop"
+    DIE = "stop"
+    PAUSE = "pause"
 
 
 class ComponentDeploymentStatus(str, Enum):
@@ -127,3 +130,17 @@ def partial(model: Type[T]) -> Type[T]:
     OptionalModel.__name__ = f"Optional{model.__name__}"
 
     return OptionalModel
+
+
+class EngineAction(BaseModel):
+    type: EngineActionType
+    component: Component
+
+
+class DeployedComponent(BaseModel):
+    container: Container
+    component_id: str
+    deployment_hash: str
+
+    class Config:
+        arbitrary_types_allowed = True

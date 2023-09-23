@@ -25,12 +25,6 @@ class Exporter:
         self._client = from_env()
         self._thread = Thread(target=self._run_event_loop, daemon=True)
 
-    _TRANSITION_MAP = {
-        ContainerEventAction.CREATE: ComponentDeploymentStatus.PENDING,
-        ContainerEventAction.START: ComponentDeploymentStatus.RUNNING,
-        ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
-    }
-
     @property
     def _filters(self) -> dict:
         return {
@@ -38,18 +32,35 @@ class Exporter:
             "event": [a.value for a in ContainerEventAction],
         }
 
-    def _parse_event(self, event: dict) -> Tuple[str, ContainerEventAction]:
+    def _parse_event(
+        self, event: dict
+    ) -> Tuple[str, ComponentDeploymentStatus]:
         action = ContainerEventAction(event["Action"])
-        component_id: str = event["Actor"]["Attributes"]["ComponentID"]
-        return component_id, action
+        attributes = event["Actor"]["Attributes"]
+        exit_code = attributes.get("exitCode", None)
+        deployment_status_map = {
+            ContainerEventAction.CREATE: ComponentDeploymentStatus.PENDING,
+            ContainerEventAction.START: ComponentDeploymentStatus.RUNNING,
+            ContainerEventAction.PAUSE: ComponentDeploymentStatus.UNKNOWN,
+            ContainerEventAction.DIE: ComponentDeploymentStatus.STOPPED
+            if exit_code and exit_code == "0"
+            else ComponentDeploymentStatus.FAILED,
+        }
+        if action == ContainerEventAction.DIE:
+            logger.info(f"Container died with exit code: {exit_code}")
+            logger.info(event)
+        deployment_status = deployment_status_map.get(action, None)
+        if not deployment_status:
+            raise ValueError(f"Invalid action: {action}")
+        component_id: str = attributes["ComponentID"]
+        return component_id, deployment_status
 
     def _get_component_from_event(self, event: dict) -> Optional[Component]:
         """
         Returns a partial Component object or None if the event is not parsable
         """
         try:
-            component_id, action = self._parse_event(event)
-            deployment_status = self._TRANSITION_MAP[action]
+            component_id, deployment_status = self._parse_event(event)
         except (KeyError, ValueError) as e:
             logger.warning(f"Could not parse event: {e}")
             return None

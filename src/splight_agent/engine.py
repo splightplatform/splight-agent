@@ -1,35 +1,20 @@
 import json
-from enum import Enum
 from typing import Callable, List, Optional, TypedDict
 
 import docker
-from docker.models.containers import Container, Image
-from pydantic import BaseModel
+from docker.models.containers import Image
 
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComputeNode, HubComponent
+from splight_agent.models import (
+    Component,
+    ComputeNode,
+    HubComponent,
+    EngineAction,
+    DeployedComponent,
+)
+from splight_agent.constants import DeploymentRestartPolicy, EngineActionType
 
 logger = SplightLogger()
-
-
-class EngineActionType(str, Enum):
-    RUN = "run"
-    STOP = "stop"
-    RESTART = "restart"
-
-
-class EngineAction(BaseModel):
-    type: EngineActionType
-    component: Component
-
-
-class DeployedComponent(BaseModel):
-    container: Container
-    component_id: str
-    deployment_hash: str
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class ComponentEnvironment(TypedDict):
@@ -60,6 +45,12 @@ class Engine:
     """
     The engine is responsible for handling the execution of components
     """
+
+    RESTART_POLICY_MAP = {
+        DeploymentRestartPolicy.ALWAYS: "always",
+        DeploymentRestartPolicy.ON_FAILURE: "on-failure",
+        DeploymentRestartPolicy.NEVER: "no",
+    }
 
     def __init__(
         self,
@@ -115,7 +106,12 @@ class Engine:
         return image
 
     def _run_container(
-        self, image: Image, environment: dict, runspec: dict, labels: dict
+        self,
+        image: Image,
+        environment: dict,
+        runspec: dict,
+        labels: dict,
+        restart_policy: dict,
     ) -> None:
         try:
             _ = self._docker_client.containers.run(
@@ -126,6 +122,7 @@ class Engine:
                 remove=False,
                 command=["python", "runner.py", "-r", json.dumps(runspec)],
                 labels=labels,
+                restart_policy=restart_policy,
             )
         except Exception:
             raise ContainerExecutionError(
@@ -144,6 +141,7 @@ class Engine:
         )
 
         # Run container
+        logger.info(f"Running container for component: {component.id}")
         self._run_container(
             image=image,
             environment={
@@ -162,6 +160,12 @@ class Engine:
                 "version": component.hub_component.version,
                 "input": component.input,
             },
+            restart_policy={
+                "Name": self.RESTART_POLICY_MAP.get(
+                    component.deployment_restart_policy, "no"
+                )
+            },
+            # TODO: add cpu and memory limit
         )
 
     def handle_action(self, action: EngineAction):
@@ -175,6 +179,7 @@ class Engine:
         if not deployed_component:
             return
         try:
+            logger.info(f"Stopping container for component: {component.id}")
             deployed_component.container.stop()
             deployed_component.container.remove()
         except Exception:
@@ -204,7 +209,7 @@ class Engine:
                 component_id=component_id,
                 deployment_hash=container[0].labels["DeploymentHash"],
             )
-        return None   
+        return None
 
     def stop_all(self) -> List[Component]:
         """
