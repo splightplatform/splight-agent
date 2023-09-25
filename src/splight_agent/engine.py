@@ -75,6 +75,13 @@ class Engine:
             EngineActionType.STOP: self.stop,
             EngineActionType.RESTART: self.restart,
         }
+    
+    def _get_component_restart_policy(self, component: Component) -> Optional[dict]:
+        if component.deployment_restart_policy:
+            return {
+                "Name": self.RESTART_POLICY_MAP[component.deployment_restart_policy]
+            }
+        return None
 
     def _download_image(self, hub_component: HubComponent) -> bytes:
         logger.info(
@@ -168,11 +175,7 @@ class Engine:
                 "version": component.hub_component.version,
                 "input": component.input,
             },
-            restart_policy={
-                "Name": self.RESTART_POLICY_MAP.get(
-                    component.deployment_restart_policy, "no"
-                )
-            },
+            restart_policy=self._get_component_restart_policy(component),
             # TODO: add cpu and memory limit
         )
 
