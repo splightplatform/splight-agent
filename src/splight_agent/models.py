@@ -2,8 +2,10 @@ from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
+from docker.models.containers import Container
 from pydantic import BaseModel
 
+from splight_agent.constants import EngineActionType
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
 
@@ -78,7 +80,7 @@ class Component(APIObject):
             == __value.deployment_restart_policy
         )
 
-    def update(self):
+    def update_status(self):
         self._rest_client.patch(
             f"v2/engine/component/components/{self.id}/",
             data={"deployment_status": self.deployment_status},
@@ -126,3 +128,15 @@ def partial(model: Type[T]) -> Type[T]:
     OptionalModel.__name__ = f"Optional{model.__name__}"
 
     return OptionalModel
+
+
+class EngineAction(BaseModel):
+    type: EngineActionType
+    component: Component
+
+
+class DeployedComponent(Component):
+    container: Optional[Container]
+
+    class Config:
+        arbitrary_types_allowed = True

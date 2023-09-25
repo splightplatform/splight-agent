@@ -6,28 +6,17 @@ import docker
 from docker.models.containers import Container, Image
 from pydantic import BaseModel
 
+from splight_agent.constants import DeploymentRestartPolicy, EngineActionType
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComputeNode, HubComponent
+from splight_agent.models import (
+    Component,
+    ComputeNode,
+    DeployedComponent,
+    EngineAction,
+    HubComponent,
+)
 
 logger = SplightLogger()
-
-
-class EngineActionType(str, Enum):
-    RUN = "run"
-    STOP = "stop"
-    RESTART = "restart"
-
-
-class EngineAction(BaseModel):
-    type: EngineActionType
-    component: Component
-
-
-class DeployedComponent(Component):
-    container: Optional[Container]
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class ComponentEnvironment(TypedDict):
@@ -58,6 +47,12 @@ class Engine:
     """
     The engine is responsible for handling the execution of components
     """
+
+    RESTART_POLICY_MAP = {
+        DeploymentRestartPolicy.ALWAYS: "always",
+        DeploymentRestartPolicy.ON_FAILURE: "on-failure",
+        DeploymentRestartPolicy.NEVER: "no",
+    }
 
     def __init__(
         self,
@@ -114,7 +109,12 @@ class Engine:
         return image
 
     def _run_container(
-        self, image: Image, environment: dict, runspec: dict, labels: dict
+        self,
+        image: Image,
+        environment: dict,
+        runspec: dict,
+        labels: dict,
+        restart_policy: dict,
     ) -> Container:
         try:
             container = self._docker_client.containers.run(
@@ -125,6 +125,7 @@ class Engine:
                 remove=False,
                 command=["python", "runner.py", "-r", json.dumps(runspec)],
                 labels=labels,
+                restart_policy=restart_policy,
             )
         except Exception:
             raise ContainerExecutionError(
@@ -167,6 +168,12 @@ class Engine:
                 "version": component.hub_component.version,
                 "input": component.input,
             },
+            restart_policy={
+                "Name": self.RESTART_POLICY_MAP.get(
+                    component.deployment_restart_policy, "no"
+                )
+            },
+            # TODO: add cpu and memory limit
         )
 
     def handle_action(self, action: EngineAction):
