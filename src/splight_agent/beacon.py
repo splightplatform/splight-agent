@@ -31,6 +31,7 @@ class Beacon:
                 break
             try:
                 self._ping()
+                logger.debug("API ping successful")
             except Exception as e:
                 logger.warning(f"Could not ping API: {e}")
             finally:

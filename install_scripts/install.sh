@@ -47,7 +47,8 @@ print_colored_message "$GREEN" "$ART_LOGO"
 
 # -----------------------------------------------
 
-CONFIG_FILE=$HOME/.splight/agent_config
+SPLIGHT_HOME=$HOME/.splight
+CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
 AGENT_VERSION="0.2.6"
 RESTART_POLICY="unless-stopped"
@@ -71,7 +72,7 @@ fi
 DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
 if [ ! -f "$CONFIG_FILE" ]; then
-    touch "$CONFIG_FILE"
+    mkdir -p $SPLIGHT_HOME && touch "$CONFIG_FILE"
     print_colored_message "$GREEN" "Config file created."
 fi
 

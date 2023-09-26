@@ -45,6 +45,9 @@ class Exporter:
         action = ContainerEventAction(event["Action"])
         component_id: str = event["Actor"]["Attributes"]["ComponentID"]
         deployment_status = self._transition_map[action](event)
+        logger.info(
+            f"Received event for component {component_id}: {action} -> {deployment_status}"
+        )
         return component_id, deployment_status
 
     def _process_stop_event(self, event: dict) -> None:
