@@ -44,7 +44,9 @@ class Dispatcher:
             and deployed_component
             and deployed_component != component
         ):
-            logger.info(f"Received RESTART action for component {component.id}")
+            logger.info(
+                f"Received RESTART action for component {component.id}"
+            )
             return EngineAction(
                 type=EngineActionType.RESTART, component=component
             )

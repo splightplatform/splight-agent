@@ -37,7 +37,6 @@ class Exporter:
     #       - [ ] Add memory parameters
     #       - [ ] Add load of deployed components on start
 
-
     @property
     def _filters(self) -> dict:
         return {
@@ -45,17 +44,19 @@ class Exporter:
             "event": [a.value for a in ContainerEventAction],
         }
 
-    def _parse_event(self, event: dict) -> Tuple[str, ComponentDeploymentStatus]:
+    def _parse_event(
+        self, event: dict
+    ) -> Tuple[str, ComponentDeploymentStatus]:
         action = ContainerEventAction(event["Action"])
         component_id: str = event["Actor"]["Attributes"]["ComponentID"]
-        deployment_status =  self._transition_map[action](event)
+        deployment_status = self._transition_map[action](event)
         return component_id, deployment_status
-    
+
     def _process_stop_event(self, event: dict) -> None:
         container_id = event["Actor"]["ID"]
         self._stopped_containers.add(container_id)
         return ComponentDeploymentStatus.STOPPED
-    
+
     def _process_die_event(self, event: dict) -> None:
         container_id = event["Actor"]["ID"]
         if container_id in self._stopped_containers:
@@ -66,7 +67,6 @@ class Exporter:
         if exit_code and exit_code == "0":
             return ComponentDeploymentStatus.SUCCEEDED
         return ComponentDeploymentStatus.FAILED
-
 
     def _get_component_from_event(self, event: dict) -> Optional[Component]:
         """
