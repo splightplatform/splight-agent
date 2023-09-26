@@ -32,11 +32,6 @@ class Exporter:
         }
         self._stopped_containers = set()
 
-    # TODO: - [x] Add failed status
-    #       - [ ] Add cpu parameters
-    #       - [ ] Add memory parameters
-    #       - [ ] Add load of deployed components on start
-
     @property
     def _filters(self) -> dict:
         return {

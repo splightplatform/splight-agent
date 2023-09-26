@@ -14,3 +14,12 @@ class DeploymentRestartPolicy(str, Enum):
 
     def __str__(self):
         return str(self.value)
+
+class DeploymentSize(str, Enum):
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+    VERY_LARGE = "very_large"
+
+    def __str__(self):
+        return self.value
