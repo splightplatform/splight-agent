@@ -1,5 +1,5 @@
 import time
-from typing import List, Optional, Protocol
+from typing import List, Optional
 
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger

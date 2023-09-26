@@ -15,6 +15,7 @@ class DeploymentRestartPolicy(str, Enum):
     def __str__(self):
         return str(self.value)
 
+
 class DeploymentSize(str, Enum):
     SMALL = "small"
     MEDIUM = "medium"

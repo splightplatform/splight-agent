@@ -1,6 +1,5 @@
 import time
 from threading import Event, Thread
-from typing import Protocol
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode

@@ -1,12 +1,14 @@
 import json
-from enum import Enum
 from typing import Callable, List, Optional, TypedDict
 
 import docker
 from docker.models.containers import Container, Image
-from pydantic import BaseModel
 
-from splight_agent.constants import DeploymentRestartPolicy, EngineActionType, DeploymentSize
+from splight_agent.constants import (
+    DeploymentRestartPolicy,
+    DeploymentSize,
+    EngineActionType,
+)
 from splight_agent.logging import SplightLogger
 from splight_agent.models import (
     Component,
@@ -55,22 +57,10 @@ class Engine:
     }
 
     DEPLOYMENT_SIZE_MAP = {
-        DeploymentSize.SMALL: {
-            'cpu': '0.5',
-            'memory': '500m'
-        },
-        DeploymentSize.MEDIUM: {
-            'cpu': '1',
-            'memory': '3g'
-        },
-        DeploymentSize.LARGE: {
-            'cpu': '3',
-            'memory': '7g'
-        },
-        DeploymentSize.VERY_LARGE: {
-            'cpu': '4',
-            'memory': '16g'
-        }
+        DeploymentSize.SMALL: {"cpu": "0.5", "memory": "500m"},
+        DeploymentSize.MEDIUM: {"cpu": "1", "memory": "3g"},
+        DeploymentSize.LARGE: {"cpu": "3", "memory": "7g"},
+        DeploymentSize.VERY_LARGE: {"cpu": "4", "memory": "16g"},
     }
 
     def __init__(
@@ -106,11 +96,13 @@ class Engine:
                 "MaximumRetryCount": 0,
             }
         return None
-    
+
     def _get_mem_limit(self, component: Component) -> str:
-        map_ =  self.DEPLOYMENT_SIZE_MAP.get(component.deployment_capacity, None)
+        map_ = self.DEPLOYMENT_SIZE_MAP.get(
+            component.deployment_capacity, None
+        )
         if map_:
-            return map_['memory']
+            return map_["memory"]
         return None
 
     def _download_image(self, hub_component: HubComponent) -> bytes:
@@ -180,19 +172,19 @@ class Engine:
         self._deployed_components[component.id] = deployed_component
 
         # Download image
-        # image_file = self._download_image(component.hub_component)
+        image_file = self._download_image(component.hub_component)
 
-        # # Load image
-        # image = self._load_image(
-        #     image_file=image_file,
-        #     hub_component_name=component.hub_component.name,
-        #     hub_component_version=component.hub_component.version,
-        # )
+        # Load image
+        image = self._load_image(
+            image_file=image_file,
+            hub_component_name=component.hub_component.name,
+            hub_component_version=component.hub_component.version,
+        )
 
         # Run container
         logger.info(f"Running conatiner for component: {component.id}")
         deployed_component.container = self._run_container(
-            image="609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-components:random-integration-2.2.0",
+            image=image,
             environment={
                 **self._component_environment,
                 "LOG_LEVEL": component.deployment_log_level,
