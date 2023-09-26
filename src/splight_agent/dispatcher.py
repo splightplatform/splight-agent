@@ -37,16 +37,19 @@ class Dispatcher:
     def _compute_action(self, component: Component) -> Optional[EngineAction]:
         deployed_component = self._engine.get_deployed_component(component.id)
         if component.deployment_active and not deployed_component:
+            logger.info(f"Received RUN action for component {component.id}")
             return EngineAction(type=EngineActionType.RUN, component=component)
         elif (
             component.deployment_active
             and deployed_component
             and deployed_component != component
         ):
+            logger.info(f"Received RESTART action for component {component.id}")
             return EngineAction(
                 type=EngineActionType.RESTART, component=component
             )
         elif not component.deployment_active and deployed_component:
+            logger.info(f"Received STOP action for component {component.id}")
             return EngineAction(
                 type=EngineActionType.STOP, component=component
             )
@@ -60,6 +63,7 @@ class Dispatcher:
         ]
 
     def start(self):
+        logger.info("Dispatcher started")
         while True:
             try:
                 actions = self._compute_actions(self._compute_node.components)

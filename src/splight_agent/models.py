@@ -42,6 +42,7 @@ class ContainerEventAction(str, Enum):
     CREATE = "create"
     START = "start"
     STOP = "stop"
+    DIE = "die"
 
 
 class ComponentDeploymentStatus(str, Enum):

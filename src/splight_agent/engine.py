@@ -75,17 +75,22 @@ class Engine:
             EngineActionType.STOP: self.stop,
             EngineActionType.RESTART: self.restart,
         }
-    
-    def _get_component_restart_policy(self, component: Component) -> Optional[dict]:
+
+    def _get_component_restart_policy(
+        self, component: Component
+    ) -> Optional[dict]:
         if component.deployment_restart_policy:
             return {
-                "Name": self.RESTART_POLICY_MAP[component.deployment_restart_policy]
+                "Name": self.RESTART_POLICY_MAP[
+                    component.deployment_restart_policy
+                ],
+                "MaximumRetryCount": 10,
             }
         return None
 
     def _download_image(self, hub_component: HubComponent) -> bytes:
         logger.info(
-            f"Starting image download for component: {hub_component.name}"
+            f"Starting image download for component: {hub_component.name} {hub_component.version}"
         )
         try:
             image_file = hub_component.get_image_file()
@@ -148,18 +153,19 @@ class Engine:
         self._deployed_components[component.id] = deployed_component
 
         # Download image
-        image_file = self._download_image(component.hub_component)
+        # image_file = self._download_image(component.hub_component)
 
-        # Load image
-        image = self._load_image(
-            image_file=image_file,
-            hub_component_name=component.hub_component.name,
-            hub_component_version=component.hub_component.version,
-        )
+        # # Load image
+        # image = self._load_image(
+        #     image_file=image_file,
+        #     hub_component_name=component.hub_component.name,
+        #     hub_component_version=component.hub_component.version,
+        # )
 
         # Run container
+        logger.info(f"Running conatiner for component: {component.id}")
         deployed_component.container = self._run_container(
-            image=image,
+            image="609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-components:random-integration-2.2.0",
             environment={
                 **self._component_environment,
                 "LOG_LEVEL": component.deployment_log_level,
@@ -190,6 +196,7 @@ class Engine:
         if not deployed_component:
             return
         try:
+            logger.info(f"Stopping container for component: {component.id}")
             deployed_component.container.stop()
             deployed_component.container.remove()
             del self._deployed_components[component.id]

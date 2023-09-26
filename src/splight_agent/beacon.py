@@ -38,6 +38,7 @@ class Beacon:
                 time.sleep(self._ping_interval)
 
     def start(self):
+        logger.info("Beacon started")
         self._thread.start()
 
     def stop(self):

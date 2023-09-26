@@ -24,12 +24,19 @@ class Exporter:
         self._compute_node = compute_node
         self._client = from_env()
         self._thread = Thread(target=self._run_event_loop, daemon=True)
+        self._transition_map = {
+            ContainerEventAction.CREATE: lambda event: ComponentDeploymentStatus.PENDING,
+            ContainerEventAction.START: lambda event: ComponentDeploymentStatus.RUNNING,
+            ContainerEventAction.STOP: self._process_stop_event,
+            ContainerEventAction.DIE: self._process_die_event,
+        }
+        self._stopped_containers = set()
 
-    _TRANSITION_MAP = {
-        ContainerEventAction.CREATE: ComponentDeploymentStatus.PENDING,
-        ContainerEventAction.START: ComponentDeploymentStatus.RUNNING,
-        ContainerEventAction.STOP: ComponentDeploymentStatus.STOPPED,
-    }
+    # TODO: - [x] Add failed status
+    #       - [ ] Add cpu parameters
+    #       - [ ] Add memory parameters
+    #       - [ ] Add load of deployed components on start
+
 
     @property
     def _filters(self) -> dict:
@@ -38,18 +45,35 @@ class Exporter:
             "event": [a.value for a in ContainerEventAction],
         }
 
-    def _parse_event(self, event: dict) -> Tuple[str, ContainerEventAction]:
+    def _parse_event(self, event: dict) -> Tuple[str, ComponentDeploymentStatus]:
         action = ContainerEventAction(event["Action"])
         component_id: str = event["Actor"]["Attributes"]["ComponentID"]
-        return component_id, action
+        deployment_status =  self._transition_map[action](event)
+        return component_id, deployment_status
+    
+    def _process_stop_event(self, event: dict) -> None:
+        container_id = event["Actor"]["ID"]
+        self._stopped_containers.add(container_id)
+        return ComponentDeploymentStatus.STOPPED
+    
+    def _process_die_event(self, event: dict) -> None:
+        container_id = event["Actor"]["ID"]
+        if container_id in self._stopped_containers:
+            self._stopped_containers.remove(container_id)
+            raise ValueError("Container was stopped")
+        exit_code = event["Actor"]["Attributes"].get("exitCode", None)
+        logger.info(f"Container {container_id} exited with code {exit_code}")
+        if exit_code and exit_code == "0":
+            return ComponentDeploymentStatus.SUCCEEDED
+        return ComponentDeploymentStatus.FAILED
+
 
     def _get_component_from_event(self, event: dict) -> Optional[Component]:
         """
         Returns a partial Component object or None if the event is not parsable
         """
         try:
-            component_id, action = self._parse_event(event)
-            deployment_status = self._TRANSITION_MAP[action]
+            component_id, deployment_status = self._parse_event(event)
         except (KeyError, ValueError) as e:
             logger.warning(f"Could not parse event: {e}")
             return None
