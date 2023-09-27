@@ -1,33 +1,24 @@
 import json
-from enum import Enum
 from typing import Callable, List, Optional, TypedDict
 
 import docker
 from docker.models.containers import Container, Image
-from pydantic import BaseModel
 
+from splight_agent.constants import (
+    DeploymentRestartPolicy,
+    DeploymentSize,
+    EngineActionType,
+)
 from splight_agent.logging import SplightLogger
-from splight_agent.models import Component, ComputeNode, HubComponent
+from splight_agent.models import (
+    Component,
+    ComputeNode,
+    DeployedComponent,
+    EngineAction,
+    HubComponent,
+)
 
 logger = SplightLogger()
-
-
-class EngineActionType(str, Enum):
-    RUN = "run"
-    STOP = "stop"
-    RESTART = "restart"
-
-
-class EngineAction(BaseModel):
-    type: EngineActionType
-    component: Component
-
-
-class DeployedComponent(Component):
-    container: Optional[Container]
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class ComponentEnvironment(TypedDict):
@@ -59,6 +50,19 @@ class Engine:
     The engine is responsible for handling the execution of components
     """
 
+    RESTART_POLICY_MAP = {
+        DeploymentRestartPolicy.ALWAYS: "always",
+        DeploymentRestartPolicy.ON_FAILURE: "on-failure",
+        DeploymentRestartPolicy.NEVER: "no",
+    }
+
+    DEPLOYMENT_SIZE_MAP = {
+        DeploymentSize.SMALL: {"cpu": "0.5", "memory": "500m"},
+        DeploymentSize.MEDIUM: {"cpu": "1", "memory": "3g"},
+        DeploymentSize.LARGE: {"cpu": "3", "memory": "7g"},
+        DeploymentSize.VERY_LARGE: {"cpu": "4", "memory": "16g"},
+    }
+
     def __init__(
         self,
         compute_node: ComputeNode,
@@ -81,14 +85,34 @@ class Engine:
             EngineActionType.RESTART: self.restart,
         }
 
+    def _get_component_restart_policy(
+        self, component: Component
+    ) -> Optional[dict]:
+        if component.deployment_restart_policy:
+            return {
+                "Name": self.RESTART_POLICY_MAP[
+                    component.deployment_restart_policy
+                ],
+                "MaximumRetryCount": 0,
+            }
+        return None
+
+    def _get_mem_limit(self, component: Component) -> str:
+        map_ = self.DEPLOYMENT_SIZE_MAP.get(
+            component.deployment_capacity, None
+        )
+        if map_:
+            return map_["memory"]
+        return None
+
     def _download_image(self, hub_component: HubComponent) -> bytes:
         logger.info(
-            f"Starting image download for component: {hub_component.name}"
+            f"Starting image download for component: {hub_component.name} {hub_component.version}"
         )
         try:
             image_file = hub_component.get_image_file()
         except Exception as e:
-            # TODO: Maybe retry?
+            # TODO: Maybe retry? or fail component?
             logger.error(e)
             raise ImageError(
                 f"Failed to download image for component: {hub_component.name}"
@@ -114,7 +138,13 @@ class Engine:
         return image
 
     def _run_container(
-        self, image: Image, environment: dict, runspec: dict, labels: dict
+        self,
+        image: Image,
+        environment: dict,
+        runspec: dict,
+        labels: dict,
+        restart_policy: dict,
+        mem_limit: str,
     ) -> Container:
         try:
             container = self._docker_client.containers.run(
@@ -125,6 +155,8 @@ class Engine:
                 remove=False,
                 command=["python", "runner.py", "-r", json.dumps(runspec)],
                 labels=labels,
+                restart_policy=restart_policy,
+                mem_limit=mem_limit,
             )
         except Exception:
             raise ContainerExecutionError(
@@ -150,6 +182,7 @@ class Engine:
         )
 
         # Run container
+        logger.info(f"Running conatiner for component: {component.id}")
         deployed_component.container = self._run_container(
             image=image,
             environment={
@@ -167,6 +200,9 @@ class Engine:
                 "version": component.hub_component.version,
                 "input": component.input,
             },
+            restart_policy=self._get_component_restart_policy(component),
+            mem_limit=self._get_mem_limit(component)
+            # TODO: add cpu limit
         )
 
     def handle_action(self, action: EngineAction):
@@ -180,16 +216,17 @@ class Engine:
         if not deployed_component:
             return
         try:
+            logger.info(f"Stopping container for component: {component.id}")
             deployed_component.container.stop()
             deployed_component.container.remove()
             del self._deployed_components[component.id]
         except Exception:
             raise ContainerExecutionError(
-                f"Failed to stop container for component: {component.name}"
+                f"Failed to stop container for component: {component.id}"
             )
 
     def restart(self, component: Component) -> None:
-        logger.info(f"Restarting component: {component.name}")
+        logger.info(f"Restarting component: {component.id}")
         self.stop(component)
         self.run(component)
 

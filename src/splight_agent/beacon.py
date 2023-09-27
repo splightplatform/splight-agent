@@ -1,6 +1,5 @@
 import time
 from threading import Event, Thread
-from typing import Protocol
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
@@ -32,12 +31,14 @@ class Beacon:
                 break
             try:
                 self._ping()
+                logger.debug("API ping successful")
             except Exception as e:
                 logger.warning(f"Could not ping API: {e}")
             finally:
                 time.sleep(self._ping_interval)
 
     def start(self):
+        logger.info("Beacon started")
         self._thread.start()
 
     def stop(self):
