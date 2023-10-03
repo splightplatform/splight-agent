@@ -158,11 +158,21 @@ class Engine:
                 restart_policy=restart_policy,
                 mem_limit=mem_limit,
                 healthcheck={
-                    'test': ['CMD', 'sh', '-c', 'ls', '/tmp/', '|', 'grep', '-q', 'healthy_'],
-                    'interval': 5000000000, # 5 seconds in nanoseconds
-                    'timeout': 5000000000, # 5 seconds in nanoseconds
-                    'start_period': 60000000000, # 60 seconds in nanoseconds
-                }
+                    "test": [
+                        "CMD",
+                        "sh",
+                        "-c",
+                        "ls",
+                        "/tmp/",
+                        "|",
+                        "grep",
+                        "-q",
+                        "healthy_",
+                    ],
+                    "interval": 5000000000,  # 5 seconds in nanoseconds
+                    "timeout": 5000000000,  # 5 seconds in nanoseconds
+                    "start_period": 60000000000,  # 60 seconds in nanoseconds
+                },
             )
         except Exception:
             raise ContainerExecutionError(
