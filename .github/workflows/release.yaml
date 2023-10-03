@@ -25,7 +25,7 @@ jobs:
           name: Release ${{ env.CURRENT_VERSION }}
           tag_name: ${{ env.CURRENT_VERSION }}
       - name: compress setup artifact files
-        run: tar -czf ./install_scripts.tar.gz ./install_scripts
+        run: tar -czf ./install_scripts.tar.gz -C install_scripts .
       - name: upload setup artifact files
         uses: actions/upload-release-asset@v1
         env:
