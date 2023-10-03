@@ -2,23 +2,17 @@
 
 set -e
 
-# Colors for prompts
-BLUE=$(tput setaf 4)
-RED=$(tput setaf 1)
-GREEN=$(tput setaf 2)
-NORMAL=$(tput sgr0)
 
-print_colored_message() {
-    local color="$1"
-    local message="$2"
+print_message() {
+    local message="$1"
     
-    printf "%s\n" "${color}${message}${NORMAL}"
+    printf "%s\n" "${message}"
 }
 
 handle_error() {   
     local error_code="$1"
 
-    print_colored_message "$RED" "An error ocurred. Exiting."
+    print_message "An error ocurred. Exiting."
     exit "$error_code"
 }
 
@@ -43,14 +37,14 @@ ART_LOGO="
                                         
 "
 
-print_colored_message "$GREEN" "$ART_LOGO"
+print_message "$ART_LOGO"
 
 # -----------------------------------------------
 
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.2.6"
+AGENT_VERSION="0.2.7"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -64,7 +58,7 @@ done
 
 # check if docker is installed
 if ! [ -x "$(command -v docker)" ]; then
-    print_colored_message "$RED" "Docker is not installed. Please install Docker first."
+    print_message "Docker is not installed. Please install Docker first."
     exit 1
 fi
 
@@ -73,7 +67,7 @@ DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     mkdir -p $SPLIGHT_HOME && touch "$CONFIG_FILE"
-    print_colored_message "$GREEN" "Config file created."
+    print_message "Config file created."
 fi
 
 COMPUTE_NODE_ID=$(grep COMPUTE_NODE_ID $CONFIG_FILE) && COMPUTE_NODE_ID=${COMPUTE_NODE_ID//*COMPUTE_NODE_ID: /}
@@ -89,11 +83,11 @@ fi
 
 
 # Pull the Docker image
-print_colored_message "$GREEN" "Pulling Docker image..."
+print_message "Pulling Docker image..."
 docker pull "$DOCKER_IMAGE"
 
 # Run the container
-print_colored_message "$GREEN" "Running container..."
+print_message "Running container..."
 docker run \
       --privileged \
       -id \
@@ -104,4 +98,4 @@ docker run \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE
 
-print_colored_message "$GREEN" "Splight agent started successfully."
+print_message "Splight agent started successfully."
