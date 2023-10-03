@@ -28,12 +28,6 @@ class Dispatcher:
         self._compute_node = compute_node
         self._engine = engine
 
-    def _execute_stop(self, component):
-        container = self._exporter.get_container(component.id)
-        if container:
-            container.stop()
-            self._exporter.remove_container(component.id)
-
     def _compute_action(self, component: Component) -> Optional[EngineAction]:
         deployed_component = self._engine.get_deployed_component(component.id)
         if component.deployment_active and not deployed_component:

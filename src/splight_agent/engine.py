@@ -157,6 +157,22 @@ class Engine:
                 labels=labels,
                 restart_policy=restart_policy,
                 mem_limit=mem_limit,
+                healthcheck={
+                    "test": [
+                        "CMD",
+                        "sh",
+                        "-c",
+                        "ls",
+                        "/tmp/",
+                        "|",
+                        "grep",
+                        "-q",
+                        "healthy_",
+                    ],
+                    "interval": 5000000000,  # 5 seconds in nanoseconds
+                    "timeout": 5000000000,  # 5 seconds in nanoseconds
+                    "start_period": 60000000000,  # 60 seconds in nanoseconds
+                },
             )
         except Exception:
             raise ContainerExecutionError(
@@ -201,7 +217,7 @@ class Engine:
                 "input": component.input,
             },
             restart_policy=self._get_component_restart_policy(component),
-            mem_limit=self._get_mem_limit(component)
+            mem_limit=self._get_mem_limit(component),
             # TODO: add cpu limit
         )
 
