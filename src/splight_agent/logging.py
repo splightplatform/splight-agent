@@ -1,18 +1,7 @@
 import os
 import sys
 import time
-from logging import (
-    CRITICAL,
-    DEBUG,
-    ERROR,
-    INFO,
-    WARNING,
-    Formatter,
-    Handler,
-    Logger,
-    StreamHandler,
-)
-from logging import root as rootLogger
+from logging import INFO, Formatter, Handler, Logger, StreamHandler
 from typing import Dict, Optional
 
 from concurrent_log_handler import ConcurrentRotatingFileHandler
