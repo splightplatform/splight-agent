@@ -23,7 +23,7 @@ class Beacon:
     def _ping(self):
         return self._client.post(
             f"v2/engine/compute/nodes/all/{self._compute_node.id}/healthcheck/",
-            {}
+            {},
         )
 
     def _ping_forever(self):
