@@ -44,7 +44,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.2.9"
+AGENT_VERSION="0.2.10"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -92,7 +92,7 @@ docker run \
       --privileged \
       -id \
       --name $CONTAINER \
-      -v $CONFIG_FILE:/root/.splight/agent_config \
+      -v $SPLIGHT_HOME:/root/.splight \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e LOG_LEVEL=$LOG_LEVEL \
       --restart $RESTART_POLICY \
