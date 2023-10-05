@@ -111,7 +111,7 @@ class ComputeNode(APIObject):
     @property
     def components(self):
         response = self._rest_client.get(
-            f"v2/engine/compute_node/{self.id}/components/",
+            f"v2/engine/compute/nodes/all/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
 
