@@ -21,17 +21,23 @@ class RestClient:
         }
 
     def post(self, path: str, data: dict) -> requests.Response:
-        return requests.post(
+        response = requests.post(
             self._base_url / path, json=data, headers=self.headers
         )
+        response.raise_for_status()
+        return response
 
     def get(self, path: str) -> requests.Response:
-        return requests.get(self._base_url / path, headers=self.headers)
+        response = requests.get(self._base_url / path, headers=self.headers)
+        response.raise_for_status()
+        return response
 
     def patch(self, path: str, data: dict) -> requests.Response:
-        return requests.patch(
+        response = requests.patch(
             self._base_url / path, json=data, headers=self.headers
         )
+        response.raise_for_status()
+        return response
 
     def download(self, path: str, external: bool = True) -> bytes:
         url = path if external else self._base_url / path
