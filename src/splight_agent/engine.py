@@ -3,6 +3,7 @@ from typing import Callable, List, Optional, TypedDict
 
 import docker
 from docker.models.containers import Container, Image
+from pkg_resources import parse_version
 
 from splight_agent.constants import (
     DeploymentRestartPolicy,
@@ -17,6 +18,7 @@ from splight_agent.models import (
     EngineAction,
     HubComponent,
 )
+from splight_agent.settings import RUNNER_CLI_VERSION
 
 logger = SplightLogger()
 
@@ -105,6 +107,14 @@ class Engine:
             return map_["memory"]
         return None
 
+    def _get_labels(self, component: Component) -> dict:
+        labels = {
+            "AgentID": self._compute_node.id,
+            "ComponentID": component.id,
+            "StateHash": str(hash(json.dumps(component.input))),
+        }
+        return labels
+
     def _download_image(self, hub_component: HubComponent) -> bytes:
         logger.info(
             f"Starting image download for component: {hub_component.name} {hub_component.version}"
@@ -141,8 +151,8 @@ class Engine:
         self,
         image: Image,
         environment: dict,
-        runspec: dict,
         labels: dict,
+        command: List[str],
         restart_policy: dict,
         mem_limit: str,
     ) -> Container:
@@ -153,7 +163,7 @@ class Engine:
                 environment=environment,
                 network_mode="host",  # TODO: delete after testing
                 remove=False,
-                command=["python", "runner.py", "-r", json.dumps(runspec)],
+                command=command,
                 labels=labels,
                 restart_policy=restart_policy,
                 mem_limit=mem_limit,
@@ -176,7 +186,7 @@ class Engine:
             )
         except Exception:
             raise ContainerExecutionError(
-                f"Failed to run container for component: {runspec['name']}"
+                f"Failed to run container for component: {labels['ComponentID']}"
             )
         return container
 
@@ -197,6 +207,27 @@ class Engine:
             hub_component_version=component.hub_component.version,
         )
 
+        # TODO: temporary fix for new runner
+        labels = self._get_labels(component)
+        current_cli_version = parse_version(
+            component.hub_component.splight_cli_version
+        )
+        if current_cli_version < RUNNER_CLI_VERSION:
+            labels["Legacy"] = "true"
+            run_spec = {
+                "name": component.hub_component.name,
+                "version": component.hub_component.version,
+                "input": component.input,
+            }
+            command = ["python", "runner.py", "-r", json.dumps(run_spec)]
+        else:
+            command = [
+                "splight-runner",
+                "run-component",
+                "./main.py",
+                f"--component-id={component.id}",
+            ]
+
         # Run container
         logger.info(f"Running conatiner for component: {component.id}")
         deployed_component.container = self._run_container(
@@ -206,16 +237,8 @@ class Engine:
                 "LOG_LEVEL": component.deployment_log_level,
                 "COMPONENT_ID": component.id,
             },
-            labels={
-                "AgentID": self._compute_node.id,
-                "ComponentID": component.id,
-                "StateHash": str(hash(json.dumps(component.input))),
-            },
-            runspec={
-                "name": component.hub_component.name,
-                "version": component.hub_component.version,
-                "input": component.input,
-            },
+            labels=labels,
+            command=command,
             restart_policy=self._get_component_restart_policy(component),
             mem_limit=self._get_mem_limit(component),
             # TODO: add cpu limit

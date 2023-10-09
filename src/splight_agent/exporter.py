@@ -35,7 +35,11 @@ class Exporter:
     @property
     def _filters(self) -> dict:
         return {
-            "label": [f"AgentID={self._compute_node.id}", "ComponentID"],
+            "label": [
+                f"AgentID={self._compute_node.id}",
+                "ComponentID",
+                "Legacy",
+            ],
             "event": [a.value for a in ContainerEventAction],
         }
 

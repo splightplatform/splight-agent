@@ -2,10 +2,12 @@ import os
 from typing import Any, Dict, Tuple
 
 import yaml
+from pkg_resources import parse_version
 from pydantic import BaseSettings, Extra
 from pydantic.env_settings import SettingsSourceCallable
 
 SPLIGHT_HOME = os.path.join(os.getenv("HOME"), ".splight")
+RUNNER_CLI_VERSION = parse_version("4.0.0")
 
 
 class Singleton:
