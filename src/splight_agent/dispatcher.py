@@ -71,7 +71,9 @@ class Dispatcher:
                             f"The engine failed to handle action {action.type}:\n{e}\n Continuing..."
                         )
             except Exception as e:
-                logger.error(f"Failed to compute actions: {e}")
+                logger.error(
+                    f"Failed to fetch components or compute actions: {e}"
+                )
             finally:
                 time.sleep(self._poll_interval)
 

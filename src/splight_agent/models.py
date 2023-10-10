@@ -24,6 +24,7 @@ class HubComponent(APIObject):
     id: str
     name: str
     version: str
+    splight_cli_version: str
 
     @property
     def _image_link(self):
