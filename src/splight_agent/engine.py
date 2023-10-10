@@ -212,7 +212,7 @@ class Engine:
         current_cli_version = parse_version(
             component.hub_component.splight_cli_version
         )
-        if current_cli_version < RUNNER_CLI_VERSION:
+        if current_cli_version.release < RUNNER_CLI_VERSION.release:
             labels["Legacy"] = "true"
             run_spec = {
                 "name": component.hub_component.name,
@@ -222,8 +222,6 @@ class Engine:
             command = ["python", "runner.py", "-r", json.dumps(run_spec)]
         else:
             command = [
-                "splight-runner",
-                "run-component",
                 "./main.py",
                 f"--component-id={component.id}",
             ]
