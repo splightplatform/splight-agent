@@ -44,7 +44,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.2.12"
+AGENT_VERSION="0.2.13"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
