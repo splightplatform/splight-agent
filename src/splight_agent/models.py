@@ -47,6 +47,7 @@ class ContainerEventAction(str, Enum):
 
 
 class ComponentDeploymentStatus(str, Enum):
+    REQUESTED = "Requested"
     PENDING = "Pending"
     RUNNING = "Running"
     SUCCEEDED = "Succeeded"
