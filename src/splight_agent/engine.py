@@ -260,6 +260,8 @@ class Engine:
             logger.info(f"Stopping container for component: {component.id}")
             deployed_component.container.stop()
             deployed_component.container.remove()
+            component.deployment_status = ComponentDeploymentStatus.STOPPED
+            component.update_status()
             del self._deployed_components[component.id]
         except Exception:
             raise ContainerExecutionError(
