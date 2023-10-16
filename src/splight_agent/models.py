@@ -86,7 +86,7 @@ class Component(APIObject):
 
     def update_status(self):
         self._rest_client.post(
-            f"v2/engine/component/components/{self.id}/update-status",
+            f"v2/engine/component/components/{self.id}/update-status/",
             data={"deployment_status": self.deployment_status},
         )
         logger.info(
