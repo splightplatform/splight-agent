@@ -13,6 +13,7 @@ from splight_agent.constants import (
 from splight_agent.logging import SplightLogger
 from splight_agent.models import (
     Component,
+    ComponentDeploymentStatus,
     ComputeNode,
     DeployedComponent,
     EngineAction,
@@ -191,6 +192,9 @@ class Engine:
         return container
 
     def run(self, component: Component):
+        component.deployment_status = ComponentDeploymentStatus.PENDING
+        component.update_status()
+
         # Add component to deployed components
         deployed_component = DeployedComponent(
             **component.dict(), container=None
@@ -256,6 +260,8 @@ class Engine:
             logger.info(f"Stopping container for component: {component.id}")
             deployed_component.container.stop()
             deployed_component.container.remove()
+            component.deployment_status = ComponentDeploymentStatus.STOPPED
+            component.update_status()
             del self._deployed_components[component.id]
         except Exception:
             raise ContainerExecutionError(
