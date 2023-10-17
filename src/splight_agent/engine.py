@@ -194,7 +194,7 @@ class Engine:
     def run(self, component: Component):
         component.deployment_status = ComponentDeploymentStatus.PENDING
         component.update_status()
-        
+
         # Add component to deployed components
         deployed_component = DeployedComponent(
             **component.dict(), container=None
