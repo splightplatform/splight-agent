@@ -24,4 +24,4 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi
 
 WORKDIR /code/src
-ENTRYPOINT [ "python", "main.py" ]
+ENTRYPOINT [ "splight-agent" ]

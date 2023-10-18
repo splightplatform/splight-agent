@@ -11,7 +11,6 @@ services:
     image: splight-agent:latest
     container_name: splight-agent
     restart: unless-stopped
-    # stdin_open: true
     tty: true
     build:
       context: .
@@ -23,7 +22,4 @@ services:
       - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
       - LOG_LEVEL=10
-      
-# networks:
-#   splight:
-#     name: splight
+
