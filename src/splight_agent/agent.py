@@ -10,6 +10,7 @@ SIGNALS_TO_HANDLE = (
     signal.SIGSEGV,
 )
 
+
 def run():
     orchestrator = Orchestrator()
 
