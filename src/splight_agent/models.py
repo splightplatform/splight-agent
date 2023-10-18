@@ -117,6 +117,13 @@ class ComputeNode(APIObject):
             f"v2/engine/compute/nodes/all/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
+    
+    def report_version(self, version: str):
+        response = self._rest_client.post(
+            f"v2/engine/compute/nodes/all/{self.id}/update-version/",
+            data={"agent_version": version},
+        )
+        return response
 
 
 T = TypeVar("T", bound=BaseModel)

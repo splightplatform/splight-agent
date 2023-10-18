@@ -4,7 +4,6 @@ version = "0.2.13"
 description = ""
 authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
-packages = [{include = "splight_agent"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -16,6 +15,8 @@ pyyaml = "^6.0.1"
 pydantic = "1.10.2"
 concurrent-log-handler = "^0.9.24"
 
+[tool.poetry.scripts]
+splight-agent = "splight_agent.agent:run"
 
 [build-system]
 requires = ["poetry-core"]

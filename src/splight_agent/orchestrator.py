@@ -8,6 +8,9 @@ from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.settings import SplightSettings
+from importlib import metadata
+
+__version__ = metadata.version('splight-agent')
 
 logger = SplightLogger(__name__)
 
@@ -18,6 +21,11 @@ class Orchestrator:
     @property
     def _compute_node(self) -> ComputeNode:
         return ComputeNode(id=self._settings.COMPUTE_NODE_ID)
+    
+    def _report_agent_version(self):
+        logger.info(f"Agent version: {__version__}")
+        self._compute_node.report_version(version=__version__)
+
 
     def _create_engine(self) -> Engine:
         return Engine(
@@ -56,6 +64,7 @@ class Orchestrator:
         self._dispatcher = self._create_dispatcher(self._engine)
 
     def start(self):
+        self._report_agent_version()
         self._exporter.start()
         self._beacon.start()
         self._dispatcher.start()
