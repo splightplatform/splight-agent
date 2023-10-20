@@ -251,10 +251,10 @@ class Engine:
         if not containers:
             return
         try:
-            container = containers[0]
-            logger.info(f"Stopping container for component: {component.id}")
-            container.stop()
-            container.remove()
+            for container in containers:
+                logger.info(f"Stopping container for component: {component.id}")
+                container.stop()
+                container.remove()
             component.deployment_status = ComponentDeploymentStatus.STOPPED
             component.update_status()
         except Exception:
