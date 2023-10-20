@@ -278,13 +278,12 @@ class Engine:
             all=True,
         )
         return containers
-    
+
     def get_component_hash(self, component_id: str) -> str:
         containers = self._get_deployed_containers(component_id)
         if not containers:
             return None
         return containers[0].labels["StateHash"]
-        
 
     def stop_all(self) -> List[Component]:
         """

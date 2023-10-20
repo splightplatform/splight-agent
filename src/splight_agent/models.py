@@ -1,6 +1,6 @@
+import json
 from enum import Enum
 from functools import cached_property
-import json
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from docker.models.containers import Container
