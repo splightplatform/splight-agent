@@ -15,7 +15,6 @@ from splight_agent.models import (
     Component,
     ComponentDeploymentStatus,
     ComputeNode,
-    DeployedComponent,
     EngineAction,
     HubComponent,
 )
@@ -77,7 +76,6 @@ class Engine:
         self._workspace_name = workspace_name
         self._ecr_repository = ecr_repository
         self._component_environment = componenent_environment
-        self._deployed_components: dict[str, DeployedComponent] = {}
         self._docker_client = docker.from_env()
 
     @property
@@ -112,7 +110,7 @@ class Engine:
         labels = {
             "AgentID": self._compute_node.id,
             "ComponentID": component.id,
-            "StateHash": str(hash(json.dumps(component.input))),
+            "StateHash": component.to_hash(),
         }
         return labels
 
@@ -150,6 +148,7 @@ class Engine:
 
     def _run_container(
         self,
+        name: str,
         image: Image,
         environment: dict,
         labels: dict,
@@ -158,8 +157,9 @@ class Engine:
         mem_limit: str,
     ) -> Container:
         try:
-            container = self._docker_client.containers.run(
+            self._docker_client.containers.run(
                 image,
+                name=name,
                 detach=True,
                 environment=environment,
                 network_mode="host",  # TODO: delete after testing
@@ -189,17 +189,10 @@ class Engine:
             raise ContainerExecutionError(
                 f"Failed to run container for component: {labels['ComponentID']}"
             )
-        return container
 
     def run(self, component: Component):
         component.deployment_status = ComponentDeploymentStatus.PENDING
         component.update_status()
-
-        # Add component to deployed components
-        deployed_component = DeployedComponent(
-            **component.dict(), container=None
-        )
-        self._deployed_components[component.id] = deployed_component
 
         # Download image
         image_file = self._download_image(component.hub_component)
@@ -232,8 +225,9 @@ class Engine:
 
         # Run container
         logger.info(f"Running conatiner for component: {component.id}")
-        deployed_component.container = self._run_container(
+        self._run_container(
             image=image,
+            name=component.id,
             environment={
                 **self._component_environment,
                 "LOG_LEVEL": component.deployment_log_level,
@@ -253,16 +247,18 @@ class Engine:
         handler(action.component)
 
     def stop(self, component: Component) -> None:
-        deployed_component = self.get_deployed_component(component.id)
-        if not deployed_component:
+        containers = self._get_deployed_containers(component.id)
+        if not containers:
             return
         try:
-            logger.info(f"Stopping container for component: {component.id}")
-            deployed_component.container.stop()
-            deployed_component.container.remove()
+            for container in containers:
+                logger.info(
+                    f"Stopping container for component: {component.id}"
+                )
+                container.stop()
+                container.remove()
             component.deployment_status = ComponentDeploymentStatus.STOPPED
             component.update_status()
-            del self._deployed_components[component.id]
         except Exception:
             raise ContainerExecutionError(
                 f"Failed to stop container for component: {component.id}"
@@ -273,18 +269,33 @@ class Engine:
         self.stop(component)
         self.run(component)
 
-    def get_deployed_component(
-        self, component_id: str
-    ) -> Optional[DeployedComponent]:
-        return self._deployed_components.get(component_id)
+    def _get_deployed_containers(
+        self, component_id: Optional[str] = None
+    ) -> List[Container]:
+        labels = [f"AgentID={self._compute_node.id}"]
+        if component_id:
+            labels.append(f"ComponentID={component_id}")
+        containers = self._docker_client.containers.list(
+            filters={"label": labels},
+            all=True,
+        )
+        return containers
+
+    def get_component_hash(self, component_id: str) -> str:
+        containers = self._get_deployed_containers(component_id)
+        if not containers:
+            return None
+        return containers[0].labels["StateHash"]
 
     def stop_all(self) -> List[Component]:
         """
         Stops all running components and returns the ids of the stopped components.
         """
         stopped_components: List[Component] = []
-        deployed_components = self._deployed_components.copy()
-        for component in deployed_components.values():
+        deployed_containers = self._get_deployed_containers()
+        for container in deployed_containers:
+            component_id = container.labels["ComponentID"]
+            component = Component(id=component_id)
             try:
                 self.stop(component)
                 stopped_components.append(component)

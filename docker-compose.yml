@@ -11,12 +11,10 @@ services:
     image: splight-agent:latest
     container_name: splight-agent
     restart: unless-stopped
-    stdin_open: true
     tty: true
     build:
       context: .
       dockerfile: ./Dockerfile
-    command: python src/main.py
     network_mode: "host" # TODO: remove this or move to dev mode
     volumes:
       - .:/code
@@ -24,7 +22,4 @@ services:
       - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
       - LOG_LEVEL=10
-      
-# networks:
-#   splight:
-#     name: splight
+

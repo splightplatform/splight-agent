@@ -1,3 +1,5 @@
+import hashlib
+import json
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
@@ -84,6 +86,18 @@ class Component(APIObject):
             == __value.deployment_restart_policy
         )
 
+    def to_hash(self):
+        return hashlib.sha256(
+            json.dumps(
+                {
+                    "input": self.input,
+                    "deployment_capacity": self.deployment_capacity,
+                    "deployment_log_level": self.deployment_log_level,
+                    "deployment_restart_policy": self.deployment_restart_policy,
+                }
+            ).encode("utf-8")
+        ).hexdigest()
+
     def update_status(self):
         self._rest_client.post(
             f"v2/engine/component/components/{self.id}/update-status/",
@@ -117,6 +131,13 @@ class ComputeNode(APIObject):
             f"v2/engine/compute/nodes/all/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
+
+    def report_version(self, version: str):
+        response = self._rest_client.post(
+            f"v2/engine/compute/nodes/all/{self.id}/update-version/",
+            data={"agent_version": version},
+        )
+        return response
 
 
 T = TypeVar("T", bound=BaseModel)

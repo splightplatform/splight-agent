@@ -17,11 +17,11 @@ RUN ./install_docker.sh
 
 # Copy only requirements to cache them in docker layer
 COPY poetry.lock pyproject.toml /code/
+COPY . /code
 
 # Install poetry dependencies
 RUN poetry config virtualenvs.create false \
-  && poetry install --no-interaction --no-ansi --no-root
+  && poetry install --no-interaction --no-ansi
 
-COPY . /code
 WORKDIR /code/src
-ENTRYPOINT [ "python", "main.py" ]
+ENTRYPOINT [ "splight-agent" ]
