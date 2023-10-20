@@ -227,7 +227,7 @@ class Engine:
         logger.info(f"Running conatiner for component: {component.id}")
         self._run_container(
             image=image,
-            name=component.name.replace(" ", "-"),
+            name=component.id,
             environment={
                 **self._component_environment,
                 "LOG_LEVEL": component.deployment_log_level,

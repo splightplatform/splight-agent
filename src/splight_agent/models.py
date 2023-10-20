@@ -1,3 +1,4 @@
+import hashlib
 import json
 from enum import Enum
 from functools import cached_property
@@ -86,18 +87,16 @@ class Component(APIObject):
         )
 
     def to_hash(self):
-        return str(
-            hash(
-                json.dumps(
-                    {
-                        "input": self.input,
-                        "deployment_capacity": self.deployment_capacity,
-                        "deployment_log_level": self.deployment_log_level,
-                        "deployment_restart_policy": self.deployment_restart_policy,
-                    }
-                )
-            )
-        )
+        return hashlib.sha256(
+            json.dumps(
+                {
+                    "input": self.input,
+                    "deployment_capacity": self.deployment_capacity,
+                    "deployment_log_level": self.deployment_log_level,
+                    "deployment_restart_policy": self.deployment_restart_policy,
+                }
+            ).encode("utf-8")
+        ).hexdigest()
 
     def update_status(self):
         self._rest_client.post(
