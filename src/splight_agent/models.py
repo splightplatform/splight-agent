@@ -1,5 +1,6 @@
 from enum import Enum
 from functools import cached_property
+import json
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from docker.models.containers import Container
@@ -82,6 +83,20 @@ class Component(APIObject):
             and self.deployment_log_level == __value.deployment_log_level
             and self.deployment_restart_policy
             == __value.deployment_restart_policy
+        )
+
+    def to_hash(self):
+        return str(
+            hash(
+                json.dumps(
+                    {
+                        "input": self.input,
+                        "deployment_capacity": self.deployment_capacity,
+                        "deployment_log_level": self.deployment_log_level,
+                        "deployment_restart_policy": self.deployment_restart_policy,
+                    }
+                )
+            )
         )
 
     def update_status(self):
