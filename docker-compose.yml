@@ -22,4 +22,6 @@ services:
       - $HOME/.splight/agent_config:/root/.splight/agent_config
     environment:
       - LOG_LEVEL=10
+      - REPORT_USAGE=true
+      - PYTHONPATH=/code/src
 

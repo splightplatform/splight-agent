@@ -37,7 +37,9 @@ class SplightSettings(BaseSettings, Singleton):
     ECR_REPOSITORY: str = ""
     NAMESPACE: str = ""
     API_POLL_INTERVAL: int = 10
-    API_PING_INTERVAL: int = 10
+    API_PING_INTERVAL: int = 1
+    REPORT_USAGE: bool = False
+    CPU_PERCENT_SAMPLES: int = 4
 
     def configure(self, **params: Dict):
         self.parse_obj(params)

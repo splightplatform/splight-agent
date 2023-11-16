@@ -9,6 +9,7 @@ from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.settings import SplightSettings
+from splight_agent.usage import UsageReporter
 
 __version__ = metadata.version("splight-agent")
 
@@ -55,6 +56,12 @@ class Orchestrator:
             engine=engine,
             poll_interval=self._settings.API_POLL_INTERVAL,
         )
+    
+    def _create_usage_reporter(self) -> UsageReporter:
+        return UsageReporter(
+            compute_node=self._compute_node,
+            cpu_percent_samples=self._settings.CPU_PERCENT_SAMPLES,
+        )
 
     def __init__(self) -> None:
         self._engine = self._create_engine()
@@ -66,6 +73,11 @@ class Orchestrator:
         self._report_agent_version()
         self._exporter.start()
         self._beacon.start()
+        if self._settings.REPORT_USAGE:
+            self._usage_reporter = self._create_usage_reporter()
+            self._usage_reporter.start()
+            
+        # blocking main thread
         self._dispatcher.start()
 
     def kill(self, sig: int, frame: FrameType):

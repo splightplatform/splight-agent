@@ -81,6 +81,14 @@ else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
+PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
+REPORT_USAGE=false
+if [ -z "$PROC_PATH" ]; then
+    REPORT_USAGE=true
+else
+    print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
+fi
+
 
 # Pull the Docker image
 print_message "Pulling Docker image..."
@@ -95,6 +103,7 @@ docker run \
       -v $SPLIGHT_HOME:/root/.splight \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e LOG_LEVEL=$LOG_LEVEL \
+      -e REPORT_USAGE=$REPORT_USAGE \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE
 
