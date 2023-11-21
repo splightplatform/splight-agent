@@ -195,14 +195,20 @@ class Engine:
         component.update_status()
 
         # Download image
-        image_file = self._download_image(component.hub_component)
+        try:
+            image_file = self._download_image(component.hub_component)
 
-        # Load image
-        image = self._load_image(
-            image_file=image_file,
-            hub_component_name=component.hub_component.name,
-            hub_component_version=component.hub_component.version,
-        )
+            # Load image
+            image = self._load_image(
+                image_file=image_file,
+                hub_component_name=component.hub_component.name,
+                hub_component_version=component.hub_component.version,
+            )
+        except ImageError as e:
+            component.deployment_status = ComponentDeploymentStatus.FAILED
+            component.update_status()
+            logger.error(e)
+            return
 
         # TODO: temporary fix for new runner
         labels = self._get_labels(component)
