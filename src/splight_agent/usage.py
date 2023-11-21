@@ -1,30 +1,34 @@
-from threading import Thread
 import time
+from threading import Thread
 from typing import Optional
-import psutil
-from splight_agent.logging import SplightLogger
 
+import psutil
+
+from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode, ComputeNodeUsage
 
 logger = SplightLogger()
 
+
 class UsageReporter:
-    def __init__(self, compute_node: ComputeNode, cpu_percent_samples: Optional[int] = 4) -> None:
+    def __init__(
+        self, compute_node: ComputeNode, cpu_percent_samples: Optional[int] = 4
+    ) -> None:
         self._compute_node = compute_node
         self._cpu_percent_samples = cpu_percent_samples
         self._thread = Thread(target=self._report_usage, daemon=True)
 
     def _get_cpu_percent(self) -> float:
-        """ Returns average cpu percent """
+        """Returns average cpu percent"""
         total = psutil.cpu_percent(interval=1)
         for i in range(self._cpu_percent_samples - 1):
             total += psutil.cpu_percent(interval=1)
         return total / self._cpu_percent_samples
-    
+
     def _get_memory_percent(self) -> float:
-        """ Returns memory percent """
+        """Returns memory percent"""
         return psutil.virtual_memory().percent
-    
+
     def _report_usage(self) -> None:
         while True:
             try:
@@ -45,11 +49,10 @@ class UsageReporter:
         """
         self._thread.start()
         logger.info("Usage reporter started")
-    
+
     def stop(self) -> None:
         """
         Stop the usage reporter daemon thread
         TODO: find a proper way to stop the thread
         """
         logger.info("Usage reporter stopped")
-    

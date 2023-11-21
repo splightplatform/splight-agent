@@ -166,6 +166,7 @@ class DeployedComponent(Component):
     class Config:
         arbitrary_types_allowed = True
 
+
 class ComputeNodeUsage(APIObject):
     compute_node: str
     timestamp: Optional[str]

@@ -56,7 +56,7 @@ class Orchestrator:
             engine=engine,
             poll_interval=self._settings.API_POLL_INTERVAL,
         )
-    
+
     def _create_usage_reporter(self) -> UsageReporter:
         return UsageReporter(
             compute_node=self._compute_node,
@@ -76,7 +76,7 @@ class Orchestrator:
         if self._settings.REPORT_USAGE:
             self._usage_reporter = self._create_usage_reporter()
             self._usage_reporter.start()
-            
+
         # blocking main thread
         self._dispatcher.start()
 
