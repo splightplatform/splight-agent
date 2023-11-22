@@ -14,6 +14,7 @@ class UsageReporter:
     def __init__(
         self, compute_node: ComputeNode, cpu_percent_samples: Optional[int] = 4
     ) -> None:
+        self._running = False
         self._compute_node = compute_node
         self._cpu_percent_samples = cpu_percent_samples
         self._thread = Thread(target=self._report_usage, daemon=True)
@@ -30,7 +31,7 @@ class UsageReporter:
         return psutil.virtual_memory().percent
 
     def _report_usage(self) -> None:
-        while True:
+        while self._running:
             try:
                 usage = ComputeNodeUsage(
                     compute_node=self._compute_node.id,
@@ -47,6 +48,7 @@ class UsageReporter:
         """
         Launch the usage reporter daemon thread
         """
+        self._running = True
         self._thread.start()
         logger.info("Usage reporter started")
 
@@ -55,4 +57,5 @@ class UsageReporter:
         Stop the usage reporter daemon thread
         TODO: find a proper way to stop the thread
         """
+        self._running = False
         logger.info("Usage reporter stopped")

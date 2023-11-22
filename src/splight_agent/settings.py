@@ -38,7 +38,7 @@ class SplightSettings(BaseSettings, Singleton):
     NAMESPACE: str = ""
     API_POLL_INTERVAL: int = 10
     API_PING_INTERVAL: int = 30
-    REPORT_USAGE: bool = False
+    REPORT_USAGE: bool = True
     CPU_PERCENT_SAMPLES: int = 4
 
     def configure(self, **params: Dict):
