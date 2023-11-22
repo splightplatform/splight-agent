@@ -165,3 +165,19 @@ class DeployedComponent(Component):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class ComputeNodeUsage(APIObject):
+    compute_node: str
+    timestamp: Optional[str]
+    cpu_percent: float
+    memory_percent: float
+
+    def save(self):
+        self._rest_client.post(
+            f"v2/engine/compute/nodes/all/{self.compute_node}/usage/",
+            data={
+                "cpu_percent": self.cpu_percent,
+                "memory_percent": self.memory_percent,
+            },
+        )
