@@ -40,7 +40,7 @@ class UsageReporter:
                 )
                 usage.save()
             except Exception as e:
-                logger.error(f"Error whi le reporting usage: {e}")
+                logger.error(f"Error while reporting usage: {e}")
             finally:
                 time.sleep(60)
 
