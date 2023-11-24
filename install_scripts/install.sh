@@ -83,7 +83,7 @@ fi
 
 PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
 REPORT_USAGE=false
-if [ -z "$PROC_PATH" ]; then
+if [ -d "$PROC_PATH" ]; then
     REPORT_USAGE=true
 else
     print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
