@@ -44,7 +44,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.3.0"
+AGENT_VERSION="0.3.1"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -61,7 +61,6 @@ if ! [ -x "$(command -v docker)" ]; then
     print_message "Docker is not installed. Please install Docker first."
     exit 1
 fi
-
 
 DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
@@ -83,7 +82,7 @@ fi
 
 PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
 REPORT_USAGE=false
-if [ -z "$PROC_PATH" ]; then
+if [ -d "$PROC_PATH" ]; then
     REPORT_USAGE=true
 else
     print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
