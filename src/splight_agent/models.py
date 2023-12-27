@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
@@ -7,7 +8,7 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 from docker.models.containers import Container
 from pydantic import BaseModel
 
-from splight_agent.constants import EngineActionType
+from splight_agent.constants import IMAGE_DIRECTORY, EngineActionType
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
 
@@ -38,7 +39,16 @@ class HubComponent(APIObject):
         return response.json()["url"]
 
     def get_image_file(self):
-        return self._rest_client.download(self._image_link)
+        image = self._rest_client.download(self._image_link)
+        if not os.path.exists(IMAGE_DIRECTORY):
+            os.makedirs(IMAGE_DIRECTORY)
+
+        image_path = os.path.join(
+            IMAGE_DIRECTORY, f"{self.name}-{self.version}"
+        )
+        with open(image_path, "wb") as fid:
+            fid.write(image)
+        return image_path
 
 
 class ContainerEventAction(str, Enum):

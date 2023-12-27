@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Callable, List, Optional, TypedDict
 
 import docker
@@ -136,7 +137,8 @@ class Engine:
     ) -> Image:
         component_tag = f"{hub_component_name.lower()}-{self._workspace_name}-{hub_component_version}"
         try:
-            self._docker_client.images.load(image_file)
+            with open(image_file, "rb") as fid:
+                self._docker_client.images.load(fid)
             image = self._docker_client.images.get(
                 f"{self._ecr_repository}:{component_tag}"
             )
@@ -205,10 +207,13 @@ class Engine:
                 hub_component_version=component.hub_component.version,
             )
         except ImageError as e:
+            os.remove(image_file)
             component.deployment_status = ComponentDeploymentStatus.FAILED
             component.update_status()
             logger.error(e)
             return
+        else:
+            os.remove(image_file)
 
         # TODO: temporary fix for new runner
         labels = self._get_labels(component)
