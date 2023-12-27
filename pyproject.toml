@@ -15,6 +15,7 @@ pyyaml = "^6.0.1"
 pydantic = "1.10.2"
 concurrent-log-handler = "^0.9.24"
 psutil = "^5.9.6"
+wget = "3.2"
 
 [tool.poetry.scripts]
 splight-agent = "splight_agent.agent:run"
@@ -29,3 +30,6 @@ line-length = 79
 [tool.isort]
 profile = "black"
 line_length = 79
+
+[tool.ruff]
+line-length = 79
