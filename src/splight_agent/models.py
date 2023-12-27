@@ -9,6 +9,7 @@ from docker.models.containers import Container
 from pydantic import BaseModel
 
 from splight_agent.constants import IMAGE_DIRECTORY, EngineActionType
+from splight_agent.exceptions import DownloadError
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
 
@@ -39,16 +40,18 @@ class HubComponent(APIObject):
         return response.json()["url"]
 
     def get_image_file(self):
-        image = self._rest_client.download(self._image_link)
-        if not os.path.exists(IMAGE_DIRECTORY):
-            os.makedirs(IMAGE_DIRECTORY)
-
         image_path = os.path.join(
             IMAGE_DIRECTORY, f"{self.name}-{self.version}"
         )
-        with open(image_path, "wb") as fid:
-            fid.write(image)
-        return image_path
+        try:
+            image = self._rest_client.download(
+                self._image_link, file_path=image_path
+            )
+        except Exception as exc:
+            for file_name in os.listdir(IMAGE_DIRECTORY):
+                os.remove(os.path.join(IMAGE_DIRECTORY, file_name))
+            raise DownloadError("Unable to download docker image") from exc
+        return image
 
 
 class ContainerEventAction(str, Enum):

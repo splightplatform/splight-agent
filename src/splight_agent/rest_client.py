@@ -1,6 +1,7 @@
-from io import BytesIO
+from typing import Optional
 
 import requests
+import wget
 from furl import furl
 
 from splight_agent.logging import SplightLogger
@@ -39,20 +40,11 @@ class RestClient:
         response.raise_for_status()
         return response
 
-    def download(self, path: str, external: bool = True) -> bytes:
+    def download(
+        self, path: str, external: bool = True, file_path: Optional[str] = None
+    ) -> bytes:
         url = path if external else self._base_url / path
         logger.info("Starting download...")
-        with requests.get(url, stream=True) as download:
-            total = int(download.headers["Content-Length"])
-            bytes = BytesIO()
-            chunk_size = total // 20
-            for chunk in download.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    logger.info(
-                        f"Downloading... {round((bytes.tell() / total) * 100, 2) }%"
-                    )
-                    bytes.write(chunk)
-            content = bytes.getvalue()
-            download.raise_for_status()
-            logger.info("Download complete")
-            return content
+        downloaded_file = wget.download(url, out=file_path)
+        logger.info("Download complete")
+        return downloaded_file
