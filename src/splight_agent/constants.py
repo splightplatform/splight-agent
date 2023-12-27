@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 IMAGE_DIRECTORY = "/images"
 
 
