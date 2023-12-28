@@ -42,7 +42,7 @@ class RestClient:
 
     def download(
         self, path: str, external: bool = True, file_path: Optional[str] = None
-    ) -> bytes:
+    ) -> str:
         url = path if external else self._base_url / path
         logger.info("Starting download...")
         downloaded_file = wget.download(url, out=file_path)
