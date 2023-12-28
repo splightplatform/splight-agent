@@ -1,3 +1,4 @@
+import sys
 from typing import Optional
 
 import requests
@@ -8,6 +9,16 @@ from splight_agent.logging import SplightLogger
 from splight_agent.settings import settings
 
 logger = SplightLogger(__name__)
+
+
+def bar_progress(current: float, total: float, width: int = 80):
+    progress_message = "Downloading: %d%% [%d / %d] bytes" % (
+        current / total * 100,
+        current,
+        total,
+    )
+    sys.stdout.write("\r" + progress_message)
+    sys.stdout.flush()
 
 
 class RestClient:
@@ -45,6 +56,7 @@ class RestClient:
     ) -> str:
         url = path if external else self._base_url / path
         logger.info("Starting download...")
-        downloaded_file = wget.download(url, out=file_path)
+        downloaded_file = wget.download(url, out=file_path, bar=bar_progress)
+        sys.stdout.write("\n")
         logger.info("Download complete")
         return downloaded_file
