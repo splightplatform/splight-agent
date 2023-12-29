@@ -1,10 +1,12 @@
-FROM python:3.11
+# FROM python:3.11
+FROM splight-runner:latest
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-RUN apt update --fix-missing
+RUN apt update --fix-missing && \
+  apt install -y gcc
 
 RUN pip install --upgrade pip && pip install poetry==1.5.1
 
