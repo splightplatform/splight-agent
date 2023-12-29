@@ -40,6 +40,8 @@ class HubComponent(APIObject):
         return response.json()["url"]
 
     def get_image_file(self):
+        if not os.path.exists(IMAGE_DIRECTORY):
+            os.makedirs(IMAGE_DIRECTORY)
         image_path = os.path.join(
             IMAGE_DIRECTORY, f"{self.name}-{self.version}"
         )
