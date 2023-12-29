@@ -1,5 +1,7 @@
 from enum import Enum
 
+IMAGE_DIRECTORY = "/images"
+
 
 class EngineActionType(str, Enum):
     RUN = "run"
