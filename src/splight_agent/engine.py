@@ -243,6 +243,7 @@ class Engine:
                 **self._component_environment,
                 "LOG_LEVEL": component.deployment_log_level,
                 "COMPONENT_ID": component.id,
+                "PROCESS_TYPE": "component",
             },
             labels=labels,
             command=command,
