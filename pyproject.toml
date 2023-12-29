@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splight-agent"
-version = "0.4.2"
+version = "0.5.0"
 description = ""
 authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
