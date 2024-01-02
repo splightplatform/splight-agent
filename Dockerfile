@@ -1,5 +1,4 @@
-# FROM python:3.11
-FROM splight-runner:latest
+FROM 609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-admin:latest
 
 ENV PYTHONUNBUFFERED=1
 
@@ -26,4 +25,4 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi
 
 WORKDIR /code/src
-ENTRYPOINT [ "splight-agent" ]
+ENTRYPOINT [ "splight-runner", "run-agent" ]
