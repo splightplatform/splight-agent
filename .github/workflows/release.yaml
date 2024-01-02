@@ -15,7 +15,7 @@ jobs:
       - name: Checkout to feature branch
         uses: actions/checkout@v3
       - name: Get version from feature branch
-        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
+        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'\"' '{ print $2 }')" >> "$GITHUB_ENV"
       - name: Create tag and release
         uses: softprops/action-gh-release@v1
         id: create_release
@@ -50,20 +50,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-east-1
 
+      - name: Login to Amazon ECR Private
+        id: login-ecr-private
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Get version from feature branch
+        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'\"' '{ print $2 }')" >> "$GITHUB_ENV"
+
+      - name: Build agent image
+        working-directory: .
+        run: |
+          docker-compose -f docker-compose.yml build splight-agent
+          docker tag splight-agent $SPLIGHT_AGENT_ECR:$VERSION
+        env:
+          SPLIGHT_AGENT_ECR: ${{ secrets.SPLIGHT_AGENT_ECR }}
+          VERSION: ${{ env.CURRENT_VERSION }}
+
       - name: Login to Amazon ECR Public
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: 'public'
 
-      - name: Get version from feature branch
-        run: echo "CURRENT_VERSION=$(grep -E 'version' pyproject.toml | awk -F'"' '{ print $2 }')" >> "$GITHUB_ENV"
-
-      - name: Build and push agent image
+      - name: Push agent image
         working-directory: .
         run: |
-          docker-compose -f docker-compose.yml build splight-agent
-          docker tag splight-agent $SPLIGHT_AGENT_ECR:$VERSION
           docker push $SPLIGHT_AGENT_ECR:$VERSION
         env:
           SPLIGHT_AGENT_ECR: ${{ secrets.SPLIGHT_AGENT_ECR }}
