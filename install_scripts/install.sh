@@ -9,14 +9,14 @@ print_message() {
     printf "%s\n" "${message}"
 }
 
-handle_error() {   
-    local error_code="$1"
+# handle_error() {   
+#     local error_code="$1"
+#
+#     print_message "An error ocurred. Exiting."
+#     exit "$error_code"
+# }
 
-    print_message "An error ocurred. Exiting."
-    exit "$error_code"
-}
-
-trap 'handle_error $?' ERR
+# trap 'handle_error $?' ERR
 
 ART_LOGO="                                                                                                                                                         
                                                                                           
@@ -80,21 +80,26 @@ else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
-PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
-REPORT_USAGE=false
-if [ -d "$PROC_PATH" ]; then
-    REPORT_USAGE=true
-else
-    print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
-fi
+# PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
+# REPORT_USAGE=false
+# if [ -d "$PROC_PATH" ]; then
+#     REPORT_USAGE=true
+# else
+#     print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
+# fi
 
 
 # Pull the Docker image
 print_message "Pulling Docker image..."
-docker pull "$DOCKER_IMAGE"
+# docker pull "$DOCKER_IMAGE"
 
 # Run the container
 print_message "Running container..."
+
+# Create env variables from config file needed for the splight runner
+while IFS=: read -r key value; do
+  export "$key"="$value"
+done < $CONFIG_FILE
 docker run \
       --privileged \
       -id \
@@ -102,6 +107,12 @@ docker run \
       -v $SPLIGHT_HOME:/root/.splight \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e LOG_LEVEL=$LOG_LEVEL \
+      -e COMPUTE_NODE_ID=$COMPUTE_NODE_ID \
+      -e SPLIGHT_ACCESS_ID=$SPLIGHT_ACCESS_ID \
+      -e SPLIGHT_GRPC_HOST=$SPLIGHT_GRPC_HOST \
+      -e SPLIGHT_PLATFORM_API_HOST=$SPLIGHT_PLATFORM_API_HOST \
+      -e SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY \
+      -e PROCESS_TYPE=agent \
       -e REPORT_USAGE=$REPORT_USAGE \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE
