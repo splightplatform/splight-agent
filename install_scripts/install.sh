@@ -80,13 +80,13 @@ else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
-# PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
-# REPORT_USAGE=false
-# if [ -d "$PROC_PATH" ]; then
-#     REPORT_USAGE=true
-# else
-#     print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
-# fi
+PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
+REPORT_USAGE=false
+if [ -d "$PROC_PATH" ]; then
+    REPORT_USAGE=true
+else
+    print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
+fi
 
 
 # Pull the Docker image
