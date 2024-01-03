@@ -9,14 +9,14 @@ print_message() {
     printf "%s\n" "${message}"
 }
 
-# handle_error() {   
-#     local error_code="$1"
-#
-#     print_message "An error ocurred. Exiting."
-#     exit "$error_code"
-# }
+handle_error() {   
+    local error_code="$1"
 
-# trap 'handle_error $?' ERR
+    print_message "An error ocurred. Exiting."
+    exit "$error_code"
+}
+
+trap 'handle_error $?' ERR
 
 ART_LOGO="                                                                                                                                                         
                                                                                           
