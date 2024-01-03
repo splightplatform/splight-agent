@@ -25,4 +25,5 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi
 
 WORKDIR /code/src
+ENV PROCESS_TYPE="agent"
 ENTRYPOINT [ "splight-runner", "run-agent" ]
