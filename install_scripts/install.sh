@@ -98,7 +98,7 @@ print_message "Running container..."
 
 # Create env variables from config file needed for the splight runner
 while IFS=: read -r key value; do
-  export "$key"="${value:1}"
+  export "$key"="${value// /}"
 done < $CONFIG_FILE
 docker run \
       --privileged \

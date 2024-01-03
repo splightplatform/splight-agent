@@ -24,10 +24,5 @@ services:
       - LOG_LEVEL=10
       - REPORT_USAGE=true
       - PYTHONPATH=/code/src
-      - COMPUTE_NODE_ID=5b736b5a-8406-44bd-aff7-a6af0b6370ac
-      - SPLIGHT_ACCESS_ID=560e53e7-d28b-4fa3-8ee7-0d4cb2e33902
-      - SPLIGHT_GRPC_HOST=integrationgrpc.splight-ai.com:443
-      - SPLIGHT_SECRET_KEY=d5df350737062fc29c687238a14792e6ed4ac63a24acc21c21f2c4d1ff20fb40
-      - SPLIGHT_PLATFORM_API_HOST=http://192.168.0.99:8000/
       - PROCESS_TYPE=agent
 
