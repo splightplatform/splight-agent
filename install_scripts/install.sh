@@ -91,7 +91,7 @@ fi
 
 # Pull the Docker image
 print_message "Pulling Docker image..."
-# docker pull "$DOCKER_IMAGE"
+docker pull "$DOCKER_IMAGE"
 
 # Run the container
 print_message "Running container..."
