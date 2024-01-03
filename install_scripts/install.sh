@@ -44,7 +44,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.4.2"
+AGENT_VERSION="0.5.0"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -95,6 +95,11 @@ docker pull "$DOCKER_IMAGE"
 
 # Run the container
 print_message "Running container..."
+
+# Create env variables from config file needed for the splight runner
+while IFS=: read -r key value; do
+  export "$key"="${value// /}"
+done < $CONFIG_FILE
 docker run \
       --privileged \
       -id \
@@ -102,6 +107,12 @@ docker run \
       -v $SPLIGHT_HOME:/root/.splight \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e LOG_LEVEL=$LOG_LEVEL \
+      -e COMPUTE_NODE_ID=$COMPUTE_NODE_ID \
+      -e SPLIGHT_ACCESS_ID=$SPLIGHT_ACCESS_ID \
+      -e SPLIGHT_GRPC_HOST=$SPLIGHT_GRPC_HOST \
+      -e SPLIGHT_PLATFORM_API_HOST=$SPLIGHT_PLATFORM_API_HOST \
+      -e SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY \
+      -e PROCESS_TYPE=agent \
       -e REPORT_USAGE=$REPORT_USAGE \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE

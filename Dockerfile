@@ -1,10 +1,11 @@
-FROM python:3.11
+FROM 609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-admin:latest
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-RUN apt update --fix-missing
+RUN apt update --fix-missing && \
+  apt install -y gcc
 
 RUN pip install --upgrade pip && pip install poetry==1.5.1
 
@@ -24,4 +25,5 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi
 
 WORKDIR /code/src
-ENTRYPOINT [ "splight-agent" ]
+ENV PROCESS_TYPE="agent"
+ENTRYPOINT [ "splight-runner", "run-agent" ]
