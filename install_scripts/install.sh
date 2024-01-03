@@ -62,7 +62,7 @@ if ! [ -x "$(command -v docker)" ]; then
     exit 1
 fi
 
-DOCKER_IMAGE="splight-agent"
+DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     mkdir -p $SPLIGHT_HOME && touch "$CONFIG_FILE"
@@ -80,13 +80,13 @@ else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
-# PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
-# REPORT_USAGE=false
-# if [ -d "$PROC_PATH" ]; then
-#     REPORT_USAGE=true
-# else
-#     print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
-# fi
+PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
+REPORT_USAGE=false
+if [ -d "$PROC_PATH" ]; then
+    REPORT_USAGE=true
+else
+    print_message "WARNING: OS does not support procfs. Usage metrics will not be reported."
+fi
 
 
 # Pull the Docker image
@@ -115,6 +115,6 @@ docker run \
       -e PROCESS_TYPE=agent \
       -e REPORT_USAGE=$REPORT_USAGE \
       --restart $RESTART_POLICY \
-      splight-agent
+      $DOCKER_IMAGE
 
 print_message "Splight agent started successfully."
