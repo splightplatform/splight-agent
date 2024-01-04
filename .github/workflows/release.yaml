@@ -79,3 +79,17 @@ jobs:
         env:
           SPLIGHT_AGENT_ECR: ${{ secrets.SPLIGHT_AGENT_ECR }}
           VERSION: ${{ env.CURRENT_VERSION }}
+  run-snyk:
+    needs: [run_tests_and_coding_style]
+    runs-on: ubuntu-latest
+    name: Check for vulnerabilities using Snyk
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Snyk
+        run: npm install snyk -g
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_API_KEY }}
+      - name: Check Vulnerabilities
+        run: |
+          snyk code test
+          snyk test
