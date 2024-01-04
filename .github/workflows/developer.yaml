@@ -37,7 +37,6 @@ jobs:
       - name: Check install.sh is same version as pyproject
         run: python .github/workflows/scripts/check_versions.py ${{ env.PYPROJECT_VERSION }} eq ${{ env.INSTALL_VERSION }}
   run-snyk:
-    needs: [run_tests_and_coding_style]
     runs-on: ubuntu-latest
     name: Check for vulnerabilities using Snyk
     steps:
