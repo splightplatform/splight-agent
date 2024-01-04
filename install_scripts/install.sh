@@ -79,11 +79,6 @@ if [ $? -eq 1 ]; then
     print_message "Could not connect to Docker. Is Docker running?"
     exit 1
 fi
-# check if docker is installed
-# if ! [ -x "$(command -v docker)" ]; then
-#     print_message "Docker is not installed. Please install Docker first."
-#     exit 1
-# fi
 
 DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
