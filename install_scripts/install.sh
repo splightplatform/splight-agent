@@ -16,6 +16,22 @@ handle_error() {
     exit "$error_code"
 }
 
+wait_for_docker() {
+    local timeout=30
+    local counter=0
+    local docker_status
+    while [ "$counter" -lt "$timeout" ]; do
+        docker_status=$(docker info > /dev/null 2>&1 && echo "ok" || echo "error")
+        if [ "$docker_status" = "ok" ]; then
+            return 0
+        fi
+        echo "Attempt ${counter}. Waiting 5 seconds to retry"
+        sleep 5
+        counter=$((counter + 1))
+    done
+    return 1
+}
+
 trap 'handle_error $?' ERR
 
 ART_LOGO="                                                                                                                                                         
@@ -44,7 +60,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.5.0"
+AGENT_VERSION="0.5.1"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -56,11 +72,18 @@ do
   esac
 done
 
-# check if docker is installed
-if ! [ -x "$(command -v docker)" ]; then
-    print_message "Docker is not installed. Please install Docker first."
+
+# Wait for docker to start
+wait_for_docker
+if [ $? -eq 1 ]; then
+    print_message "Could not connect to Docker. Is Docker running?"
     exit 1
 fi
+# check if docker is installed
+# if ! [ -x "$(command -v docker)" ]; then
+#     print_message "Docker is not installed. Please install Docker first."
+#     exit 1
+# fi
 
 DOCKER_IMAGE="public.ecr.aws/h2s4s1p9/splight-agent:$AGENT_VERSION"
 
