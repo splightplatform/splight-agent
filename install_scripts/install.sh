@@ -16,6 +16,22 @@ handle_error() {
     exit "$error_code"
 }
 
+wait_for_docker() {
+    local timeout=30
+    local counter=0
+    local docker_status
+    while [ "$counter" -lt "$timeout" ]; do
+        docker_status=$(docker info > /dev/null 2>&1 && echo "ok" || echo "error")
+        if [ "$docker_status" = "ok" ]; then
+            return 0
+        fi
+        echo "Attempt ${counter}. Waiting 5 seconds to retry"
+        sleep 5
+        counter=$((counter + 1))
+    done
+    return 1
+}
+
 trap 'handle_error $?' ERR
 
 ART_LOGO="                                                                                                                                                         
@@ -56,9 +72,11 @@ do
   esac
 done
 
-# check if docker is installed
-if ! [ -x "$(command -v docker)" ]; then
-    print_message "Docker is not installed. Please install Docker first."
+
+# Wait for docker to start
+wait_for_docker
+if [ $? -eq 1 ]; then
+    print_message "Could not connect to Docker. Is Docker running?"
     exit 1
 fi
 
