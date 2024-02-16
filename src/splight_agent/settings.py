@@ -31,7 +31,6 @@ class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
     SPLIGHT_SECRET_KEY: str = ""
     SPLIGHT_PLATFORM_API_HOST: str = "https://api.splight-ai.com"
-    SPLIGHT_GRPC_HOST: str = "grpc.splight-ai.com:443"
     COMPUTE_NODE_ID: str = ""
     WORKSPACE_NAME: str = ""
     ECR_REPOSITORY: str = ""

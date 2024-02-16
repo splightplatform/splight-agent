@@ -33,7 +33,6 @@ class ComponentEnvironment(TypedDict):
     SPLIGHT_ACCESS_ID: str
     SPLIGHT_SECRET_KEY: str
     SPLIGHT_PLATFORM_API_HOST: str
-    SPLIGHT_GRPC_HOST: str
 
 
 class InvalidActionError(Exception):
