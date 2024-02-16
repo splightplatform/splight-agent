@@ -217,10 +217,16 @@ class Engine:
 
         # TODO: temporary fix for new runner
         labels = self._get_labels(component)
-        current_cli_version = parse_version(
-            component.hub_component.splight_cli_version
+        cli_version = (
+            parse_version(component.hub_component.splight_cli_version)
+            if component.hub_component.splight_cli_version
+            else None
         )
-        if current_cli_version.release < RUNNER_CLI_VERSION.release:
+        is_legacy = (
+            cli_version is not None
+            and cli_version.release < RUNNER_CLI_VERSION.release
+        )
+        if is_legacy:
             labels["Legacy"] = "true"
             run_spec = {
                 "name": component.hub_component.name,

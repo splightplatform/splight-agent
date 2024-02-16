@@ -28,7 +28,8 @@ class HubComponent(APIObject):
     id: str
     name: str
     version: str
-    splight_cli_version: str
+    splight_lib_version: Optional[str] = None
+    splight_cli_version: Optional[str] = None
 
     @property
     def _image_link(self):
