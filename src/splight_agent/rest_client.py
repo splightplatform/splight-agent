@@ -39,8 +39,8 @@ class RestClient:
         response.raise_for_status()
         return response
 
-    def get(self, path: str) -> requests.Response:
-        response = requests.get(self._base_url / path, headers=self.headers)
+    def get(self, path: str, params: dict=None) -> requests.Response:
+        response = requests.get(self._base_url / path, headers=self.headers, params=params)
         response.raise_for_status()
         return response
 

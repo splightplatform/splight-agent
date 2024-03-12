@@ -33,9 +33,10 @@ class HubComponent(APIObject):
 
     @property
     def _image_link(self):
-        response = self._rest_client.post(
-            "v2/hub/download/image_url/",
-            data={"name": self.name, "version": self.version},
+        params = {"type": "image"}
+        response = self._rest_client.get(
+            f"v2/hub/component/versions/{self.id}/download_url/",
+            params=params,
         )
         response.raise_for_status()
         return response.json()["url"]
