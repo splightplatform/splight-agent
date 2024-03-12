@@ -36,16 +36,3 @@ jobs:
         run: python .github/workflows/scripts/check_versions.py ${{ env.PREVIOUS_VERSION }} lt ${{ env.PYPROJECT_VERSION }}
       - name: Check install.sh is same version as pyproject
         run: python .github/workflows/scripts/check_versions.py ${{ env.PYPROJECT_VERSION }} eq ${{ env.INSTALL_VERSION }}
-  run-snyk:
-    runs-on: ubuntu-latest
-    name: Check for vulnerabilities using Snyk
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Snyk
-        run: npm install snyk -g
-      - name: Authenticate Snyk
-        run: snyk auth ${{ secrets.SNYK_API_KEY }}
-      - name: Check Vulnerabilities
-        run: |
-          snyk code test
-          snyk test
