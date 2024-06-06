@@ -44,11 +44,19 @@ class Dispatcher:
             return EngineAction(
                 type=EngineActionType.RESTART, component=component
             )
-        elif not component.deployment_active and component_hash:
-            logger.info(f"Received STOP action for component {component.id}")
-            return EngineAction(
-                type=EngineActionType.STOP, component=component
-            )
+        elif not component.deployment_active:
+            if component_hash:
+                logger.info(f"Received STOP action for component {component.id}")
+                return EngineAction(
+                    type=EngineActionType.STOP, component=component
+                )
+            elif component.deployment_status != ComponentDeploymentStatus.STOPPED:
+                logger.info(
+                    f"Component {component.id} has status {component.deployment_status} and should be STOPPED. Setting status to STOPPED."
+                )
+                component.deployment_status = ComponentDeploymentStatus.STOPPED
+                component.update_status()
+                return None
         return None
 
     def _compute_actions(self, components: list[Component]):
