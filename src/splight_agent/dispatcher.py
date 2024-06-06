@@ -46,11 +46,16 @@ class Dispatcher:
             )
         elif not component.deployment_active:
             if component_hash:
-                logger.info(f"Received STOP action for component {component.id}")
+                logger.info(
+                    f"Received STOP action for component {component.id}"
+                )
                 return EngineAction(
                     type=EngineActionType.STOP, component=component
                 )
-            elif component.deployment_status != ComponentDeploymentStatus.STOPPED:
+            elif (
+                component.deployment_status
+                != ComponentDeploymentStatus.STOPPED
+            ):
                 logger.info(
                     f"Component {component.id} has status {component.deployment_status} and should be STOPPED. Setting status to STOPPED."
                 )
