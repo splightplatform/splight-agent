@@ -60,7 +60,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.5.7"
+AGENT_VERSION="0.5.8"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -131,6 +131,9 @@ docker run \
       -e SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY \
       -e PROCESS_TYPE=agent \
       -e REPORT_USAGE=$REPORT_USAGE \
+      --log-driver json-file \
+      --log-opt max-size=10m \
+      --log-opt max-file=3 \
       --restart $RESTART_POLICY \
       $DOCKER_IMAGE
 

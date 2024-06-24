@@ -157,6 +157,10 @@ class Engine:
         restart_policy: dict,
         mem_limit: str,
     ) -> Container:
+        log_config = {
+            "type": "json-file",
+            "config": {"max-size": "10m", "max-file": "3"},
+        }
         try:
             self._docker_client.containers.run(
                 image,
@@ -169,6 +173,7 @@ class Engine:
                 labels=labels,
                 restart_policy=restart_policy,
                 mem_limit=mem_limit,
+                log_config=log_config,
                 healthcheck={
                     "test": [
                         "CMD",
