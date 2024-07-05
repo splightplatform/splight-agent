@@ -208,9 +208,6 @@ class Engine:
                 hub_component_version=component.hub_component.version,
             )
         except ImageError as e:
-            import traceback, sys
-            traceback.print_exc(file=sys.stdout)
-            __import__('ipdb').set_trace()
             os.remove(image_file)
             component.deployment_status = ComponentDeploymentStatus.FAILED
             component.update_status()
