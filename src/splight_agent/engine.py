@@ -134,17 +134,14 @@ class Engine:
         hub_component_name: str,
         hub_component_version: str,
     ) -> Image:
-        component_tag = f"{hub_component_name.lower()}-{self._workspace_name}-{hub_component_version}"
         try:
             with open(image_file, "rb") as fid:
-                self._docker_client.images.load(fid)
-            image = self._docker_client.images.get(
-                f"{self._ecr_repository}:{component_tag}"
-            )
-        except Exception:
+                images = self._docker_client.images.load(fid)
+            image = images[0]
+        except Exception as exc:
             raise ImageError(
                 f"Failed to load image for component: {hub_component_name}"
-            )
+            ) from exc
         return image
 
     def _run_container(

@@ -1,4 +1,7 @@
-FROM 609067598877.dkr.ecr.us-east-1.amazonaws.com/splight-admin:latest
+FROM --platform=linux/amd64 python:3.11.7-slim
+
+WORKDIR /whl
+RUN pip install --upgrade splight-runner
 
 ENV PYTHONUNBUFFERED=1
 
