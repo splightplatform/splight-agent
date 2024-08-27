@@ -75,12 +75,12 @@ class ComponentDeploymentStatus(str, Enum):
     STOPPED = "Stopped"
     UNKNOWN = "Unknown"
 
+class DeployableInstance(APIObject):
+    _COMPARABLE_FIELDS = None
+    _INSTANCE_URL = None
 
-class Component(APIObject):
     id: str
     name: str
-    input: List[Dict[str, Any]]
-    hub_component: HubComponent
     deployment_active: bool
     deployment_status: ComponentDeploymentStatus
     deployment_capacity: str
@@ -91,42 +91,63 @@ class Component(APIObject):
 
     def __eq__(self, __value: object) -> bool:
         """only comparing attributes that are important for the deployment"""
-        if not isinstance(__value, Component):
+        if not isinstance(__value, self.__class__):
             return NotImplemented
-
+        
+        if not self.__COMPARABLE_FIELDS:
+            raise NotImplementedError(
+                "The class must define __COMPARABLE_FIELDS to compare instances"
+            )
+        
         return (
-            self.input == __value.input
+            all(
+                getattr(self, field) == getattr(__value, field)
+                for field in self.__COMPARABLE_FIELDS
+            )
             and self.deployment_active == __value.deployment_active
             and self.deployment_capacity == __value.deployment_capacity
             and self.deployment_log_level == __value.deployment_log_level
             and self.deployment_restart_policy
             == __value.deployment_restart_policy
         )
-
+    
     def to_hash(self):
         return hashlib.sha256(
             json.dumps(
                 {
-                    "input": self.input,
+                    field: getattr(self, field)
+                    for field in self.__COMPARABLE_FIELDS
+                }
+                + {
                     "deployment_capacity": self.deployment_capacity,
                     "deployment_log_level": self.deployment_log_level,
                     "deployment_restart_policy": self.deployment_restart_policy,
                 }
             ).encode("utf-8")
         ).hexdigest()
-
+    
     def update_status(self):
+        if not self._INSTANCE_URL:
+            raise NotImplementedError(
+                "The class must define __UPDATE_URL to update the status"
+            )
+        
         self._rest_client.post(
-            f"v2/engine/component/components/{self.id}/update-status/",
+            f"{self._INSTANCE_URL}/{self.id}/update-status/",
             data={"deployment_status": self.deployment_status},
         )
         logger.info(
-            f"Component {self.id} updated with status {self.deployment_status}"
+            f"{self.__class__.__name__} {self.id} updated with status {self.deployment_status}"
         )
 
     def refresh(self):
+        if not self._INSTANCE_URL:
+            raise NotImplementedError(
+                "The class must define _INSTANCE_URL to refresh the instance"
+            )
+        
         response = self._rest_client.get(
-            f"v2/engine/component/components/{self.id}/"
+            f"{self._INSTANCE_URL}/{self.id}/"
         )
         response.raise_for_status()
         data = response.json()
@@ -135,7 +156,27 @@ class Component(APIObject):
                 setattr(self, field.name, data[field.name])
 
     def __str__(self) -> str:
-        return f"Component(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
+        return f"{self.__class__.__name__}(id={self.id}, name={self.name}, deployment_active={self.deployment_active}))"
+
+class Component(DeployableInstance):
+    _COMPARABLE_FIELDS = ["input"]
+    _INSTANCE_URL = "v2/engine/component/components"
+
+    input: List[Dict[str, Any]]
+    hub_component: HubComponent
+
+class Port(BaseModel):
+    name: str
+    internal_port: int
+    exposed_port: int
+
+class Server(DeployableInstance):
+    _COMPARABLE_FIELDS = ["config", "ports", "env_vars"]
+    _INSTANCE_URL = "v2/engine/server/servers"
+
+    config: Dict[str, Any]
+    ports: List[Port]
+    env_vars: Dict[str, str]
 
 
 class ComputeNode(APIObject):
@@ -148,6 +189,13 @@ class ComputeNode(APIObject):
             f"v2/engine/compute/nodes/all/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
+    
+    @property
+    def servers(self):
+        response = self._rest_client.get(
+            f"v2/engine/compute/nodes/all/{self.id}/servers/",
+        )
+        return [Server(**s) for s in response.json()]
 
     def report_version(self, version: str):
         response = self._rest_client.post(
