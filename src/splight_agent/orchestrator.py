@@ -84,7 +84,7 @@ class Orchestrator:
         stopped_components = self._engine.stop_all()
         logger.info(f"Stopped {len(stopped_components)} components")
         logger.info("Waiting for components to be stopped in the platform...")
-        self._dispatcher.wait_for_components_to_stop(stopped_components)
+        self._dispatcher.wait_for_instances_to_stop(stopped_components)
         logger.info("All components stopped")
         self._beacon.stop()
         self._exporter.stop()
