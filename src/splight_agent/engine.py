@@ -253,7 +253,7 @@ class Engine:
 
         # Run container
         logger.info(
-            f"Running conatiner for {instance.instance_type}: {instance.id}"
+            f"Running container for {instance.instance_type}: {instance.id}"
         )
         self._run_container(
             image=image,
