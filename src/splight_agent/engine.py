@@ -77,6 +77,8 @@ class Engine:
         self._ecr_repository = ecr_repository
         self._component_environment = componenent_environment
         self._docker_client = docker.from_env()
+        self._docker_network = self._get_or_create_network()
+        self._add_containers_to_network()
 
     @property
     def handlers(self) -> dict[EngineActionType, Callable[[Component], None]]:
@@ -85,6 +87,22 @@ class Engine:
             EngineActionType.STOP: self.stop,
             EngineActionType.RESTART: self.restart,
         }
+
+    def _get_or_create_network(self) -> str:
+        network_name = self._compute_node.id
+        try:
+            net = self._docker_client.networks.get(network_name)
+        except docker.errors.NotFound:
+            net = self._docker_client.networks.create(
+                name=network_name, driver="bridge"
+            )
+        return net
+    
+    def _add_containers_to_network(self) -> None:
+        containers = self._get_deployed_containers()
+        for container in containers:
+            if self._docker_network.name not in container.attrs["NetworkSettings"]["Networks"]:
+                self._docker_network.connect(container)
 
     def _get_instance_restart_policy(
         self, instance: DeployableInstance
@@ -206,6 +224,7 @@ class Engine:
                 mem_limit=mem_limit,
                 log_config=log_config,
                 ports=ports,
+                network=self._docker_network.name,
                 healthcheck={
                     "test": [
                         "CMD",
