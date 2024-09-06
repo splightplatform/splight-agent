@@ -49,7 +49,7 @@ class ContainerExecutionError(Exception): ...
 
 class Engine:
     """
-    The engine is responsible for handling the execution of components
+    The engine is responsible for handling the execution of instances
     """
 
     RESTART_POLICY_MAP = {
@@ -312,7 +312,7 @@ class Engine:
             )
 
     def restart(self, instance: DeployableInstance) -> None:
-        logger.info(f"Restarting component: {instance.id}")
+        logger.info(f"Restarting instance: {instance.id}")
         self.stop(instance)
         self.run(instance)
 
@@ -338,11 +338,9 @@ class Engine:
         """
         Stop all running instances and return the ids.
         """
-        setopped_instances: List[Component] = []
+        setopped_instances: List[DeployableInstance] = []
         deployed_containers = self._get_deployed_containers()
         for container in deployed_containers:
-            # component_id = container.labels["ComponentID"]
-            # component = Component(id=component_id)
             instance_id = container.labels.get("ComponentID", None)
             if not instance_id:
                 instance_id = container.labels.get("ServerID", None)
