@@ -29,5 +29,4 @@ RUN poetry config virtualenvs.create false \
 
 WORKDIR /code/src
 ENV PROCESS_TYPE="agent"
-# ENTRYPOINT [ "splight-runner", "run-agent" ]
-ENTRYPOINT [ "python", "main.py" ]
+ENTRYPOINT [ "splight-runner", "run-agent" ]
