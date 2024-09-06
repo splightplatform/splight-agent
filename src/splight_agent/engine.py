@@ -97,11 +97,14 @@ class Engine:
                 name=network_name, driver="bridge"
             )
         return net
-    
+
     def _add_containers_to_network(self) -> None:
         containers = self._get_deployed_containers()
         for container in containers:
-            if self._docker_network.name not in container.attrs["NetworkSettings"]["Networks"]:
+            if (
+                self._docker_network.name
+                not in container.attrs["NetworkSettings"]["Networks"]
+            ):
                 self._docker_network.connect(container)
 
     def _get_instance_restart_policy(

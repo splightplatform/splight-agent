@@ -28,10 +28,14 @@ class Dispatcher:
         self._compute_node = compute_node
         self._engine = engine
 
-    def _compute_action(self, instance: DeployableInstance) -> Optional[EngineAction]:
+    def _compute_action(
+        self, instance: DeployableInstance
+    ) -> Optional[EngineAction]:
         instance_hash = self._engine.get_instance_hash(instance)
         if instance.deployment_active and not instance_hash:
-            logger.info(f"Received RUN action {instance.instance_type} {instance.id}")
+            logger.info(
+                f"Received RUN action {instance.instance_type} {instance.id}"
+            )
             return EngineAction(type=EngineActionType.RUN, instance=instance)
         elif (
             instance.deployment_active
@@ -53,8 +57,7 @@ class Dispatcher:
                     type=EngineActionType.STOP, instance=instance
                 )
             elif (
-                instance.deployment_status
-                != ComponentDeploymentStatus.STOPPED
+                instance.deployment_status != ComponentDeploymentStatus.STOPPED
             ):
                 logger.info(
                     f"Instance {instance.id} has status {instance.deployment_status} and should be STOPPED. Setting status to STOPPED."
@@ -94,7 +97,7 @@ class Dispatcher:
 
     def wait_for_instances_to_stop(self, instances: List[DeployableInstance]):
         while True:
-            for index, instance in  enumerate(instances):
+            for index, instance in enumerate(instances):
                 instance.refresh()
                 if (
                     instance.deployment_status

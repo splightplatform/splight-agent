@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
 import hashlib
 import json
 import os
+from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Type, TypeVar
@@ -224,6 +224,7 @@ class Port(BaseModel):
     protocol: str
     internal_port: int
     exposed_port: int
+
 
 class EnvVar(BaseModel):
     name: str
