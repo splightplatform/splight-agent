@@ -225,6 +225,10 @@ class Port(BaseModel):
     internal_port: int
     exposed_port: int
 
+class EnvVar(BaseModel):
+    name: str
+    value: str
+
 
 class Server(DeployableInstance):
     _COMPARABLE_FIELDS = ["config", "ports", "env_vars"]
@@ -232,7 +236,7 @@ class Server(DeployableInstance):
 
     config: List[Dict[str, Any]]
     ports: List[Port]
-    env_vars: Dict[str, str]
+    env_vars: List[EnvVar]
     hub_server: HubServer
 
     def get_hub_instance(self):

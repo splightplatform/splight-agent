@@ -181,7 +181,8 @@ class Engine:
             env["COMPONENT_ID"] = instance.id
         elif instance.instance_type == "server":
             env["SPLIGHT_SERVER_ID"] = instance.id
-            # TODO: add env vars from splight server
+            for env_var in instance.env_vars:
+                env[env_var.name] = env_var.value
         return env
 
     def _get_ports(self, instance: DeployableInstance) -> dict:
