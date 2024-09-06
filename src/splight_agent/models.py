@@ -277,7 +277,8 @@ T = TypeVar("T", bound=BaseModel)
 
 
 def partial(model: Type[T]) -> Type[T]:
-    class OptionalModel(model): ...
+    class OptionalModel(model):
+        ...
 
     for field in OptionalModel.__fields__.values():
         field.required = False

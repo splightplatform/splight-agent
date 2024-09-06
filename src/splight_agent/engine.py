@@ -38,13 +38,16 @@ class ComponentEnvironment(TypedDict):
     SPLIGHT_PLATFORM_API_HOST: str
 
 
-class InvalidActionError(Exception): ...
+class InvalidActionError(Exception):
+    ...
 
 
-class ImageError(Exception): ...
+class ImageError(Exception):
+    ...
 
 
-class ContainerExecutionError(Exception): ...
+class ContainerExecutionError(Exception):
+    ...
 
 
 class Engine:
@@ -192,9 +195,9 @@ class Engine:
         if instance.instance_type == "server":
             ports = {}
             for port in instance.ports:
-                ports[f"{port.internal_port}/{port.protocol}"] = (
-                    port.exposed_port
-                )
+                ports[
+                    f"{port.internal_port}/{port.protocol}"
+                ] = port.exposed_port
             return ports
         return None
 
