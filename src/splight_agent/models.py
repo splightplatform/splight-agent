@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Type, TypeVar, Literal
+from typing import Any, Dict, List, Literal, Optional, Type, TypeVar
 
 from docker.models.containers import Container
 from pydantic import BaseModel
