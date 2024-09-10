@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar, Literal
 
 from docker.models.containers import Container
 from pydantic import BaseModel
@@ -212,10 +212,10 @@ class Component(DeployableInstance):
     input: List[Dict[str, Any]]
     hub_component: HubComponent
 
-    def get_hub_instance(self):
+    def get_hub_instance(self) -> HubComponent:
         return self.hub_component
 
-    def get_deploy_label(self):
+    def get_deploy_label(self) -> Literal["ComponentID"]:
         return "ComponentID"
 
 
@@ -259,7 +259,7 @@ class ComputeNode(APIObject):
         return [Component(**c) for c in response.json()]
 
     @property
-    def servers(self):
+    def servers(self) -> list[Server]:
         response = self._rest_client.get(
             f"v2/engine/compute/nodes/all/{self.id}/servers/",
         )

@@ -177,7 +177,7 @@ class Engine:
             ]
         return None
 
-    def _get_environment(self, instance: DeployableInstance) -> dict:
+    def _get_environment(self, instance: DeployableInstance) -> dict[str, str]:
         env = {
             **self._component_environment,
             "LOG_LEVEL": instance.deployment_log_level,
@@ -191,7 +191,7 @@ class Engine:
                 env[env_var.name] = env_var.value
         return env
 
-    def _get_ports(self, instance: DeployableInstance) -> dict:
+    def _get_ports(self, instance: DeployableInstance) -> dict | None:
         if instance.instance_type == "server":
             ports = {}
             for port in instance.ports:
@@ -209,11 +209,9 @@ class Engine:
         labels: dict,
         restart_policy: dict,
         mem_limit: str,
-        command: Optional[List[str]] = None,
-        ports: Optional[dict] = None,
+        command: list[str] | None = None,
+        ports: dict | None = None,
     ) -> Container:
-        # TODO: add port exposing and env vars for servers
-        # TODO: add network
         log_config = {
             "type": "json-file",
             "config": {"max-size": "10m", "max-file": "3"},
