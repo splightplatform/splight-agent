@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, List, Literal, Optional, Type, TypeVar
+from typing import Any, Literal, Type, TypeVar
 
 from docker.models.containers import Container
 from pydantic import BaseModel
@@ -21,19 +21,30 @@ class APIObject(BaseModel):
     @cached_property
     def _rest_client(self) -> RestClient:
         return RestClient()
+    
+class HubInstance(APIObject):
+    id: str
+    name: str
+    version: str
+
+    @property
+    @abstractmethod
+    def _image_link(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_image_file(self) -> str:
+        pass
 
 
 # Component
 # (only the fields that are needed for the agent)
-class HubComponent(APIObject):
-    id: str
-    name: str
-    version: str
-    splight_lib_version: Optional[str] = None
-    splight_cli_version: Optional[str] = None
+class HubComponent(HubInstance):
+    splight_lib_version: str | None = None
+    splight_cli_version: str | None = None
 
     @property
-    def _image_link(self):
+    def _image_link(self) -> str:
         params = {"type": "image"}
         response = self._rest_client.get(
             f"v2/hub/component/versions/{self.id}/download_url/",
@@ -42,7 +53,7 @@ class HubComponent(APIObject):
         response.raise_for_status()
         return response.json()["url"]
 
-    def get_image_file(self):
+    def get_image_file(self) -> str:
         if not os.path.exists(IMAGE_DIRECTORY):
             os.makedirs(IMAGE_DIRECTORY)
         image_path = os.path.join(
@@ -59,13 +70,10 @@ class HubComponent(APIObject):
         return image
 
 
-class HubServer(APIObject):
-    id: str
-    name: str
-    version: str
+class HubServer(HubInstance):
 
     @property
-    def _image_link(self):
+    def _image_link(self) -> str:
         params = {"type": "image"}
         response = self._rest_client.get(
             f"v2/hub/server/versions/{self.id}/download_url/",
@@ -74,7 +82,7 @@ class HubServer(APIObject):
         response.raise_for_status()
         return response.json()["url"]
 
-    def get_image_file(self):
+    def get_image_file(self) -> str:
         server_directory = os.path.join(IMAGE_DIRECTORY, "servers")
         if not os.path.exists(server_directory):
             os.makedirs(server_directory)
@@ -121,19 +129,19 @@ class DeployableInstance(APIObject, ABC):
     deployment_capacity: str
     deployment_log_level: str
     deployment_restart_policy: str
-    deployment_updated_at: Optional[str]
-    compute_node: Optional[str]
+    deployment_updated_at: str | None
+    compute_node: str | None
 
     @property
-    def instance_type(self):
+    def instance_type(self) -> str:
         return self.__class__.__name__.lower()
 
     @abstractmethod
-    def get_hub_instance(self):
+    def get_hub_instance(self) -> HubInstance:
         pass
 
     @abstractmethod
-    def get_deploy_label(self):
+    def get_deploy_label(self) -> str:
         pass
 
     def __eq__(self, __value: object) -> bool:
@@ -158,7 +166,7 @@ class DeployableInstance(APIObject, ABC):
             == __value.deployment_restart_policy
         )
 
-    def to_hash(self):
+    def to_hash(self) -> str:
         data = self.dict()
         comparable_fields_dict = {
             field: data[field] for field in self._COMPARABLE_FIELDS
@@ -174,7 +182,7 @@ class DeployableInstance(APIObject, ABC):
             ).encode("utf-8")
         ).hexdigest()
 
-    def update_status(self):
+    def update_status(self) -> None:
         if not self._INSTANCE_URL:
             raise NotImplementedError(
                 "The class must define _INSTANCE_URL to update the status"
@@ -188,7 +196,7 @@ class DeployableInstance(APIObject, ABC):
             f"{self.instance_type} {self.id} updated with status {self.deployment_status}"
         )
 
-    def refresh(self):
+    def refresh(self) -> None:
         if not self._INSTANCE_URL:
             raise NotImplementedError(
                 "The class must define _INSTANCE_URL to refresh the instance"
@@ -209,7 +217,7 @@ class Component(DeployableInstance):
     _COMPARABLE_FIELDS = ["input"]
     _INSTANCE_URL = "v2/engine/component/components"
 
-    input: List[Dict[str, Any]]
+    input: list[dict[str, Any]]
     hub_component: HubComponent
 
     def get_hub_instance(self) -> HubComponent:
@@ -235,24 +243,24 @@ class Server(DeployableInstance):
     _COMPARABLE_FIELDS = ["config", "ports", "env_vars"]
     _INSTANCE_URL = "v2/engine/server/servers"
 
-    config: List[Dict[str, Any]]
-    ports: List[Port]
-    env_vars: List[EnvVar]
+    config: list[dict[str, Any]]
+    ports: list[Port]
+    env_vars: list[EnvVar]
     hub_server: HubServer
 
-    def get_hub_instance(self):
+    def get_hub_instance(self) -> HubServer:
         return self.hub_server
 
-    def get_deploy_label(self):
+    def get_deploy_label(self) -> Literal["ServerID"]:
         return "ServerID"
 
 
 class ComputeNode(APIObject):
     id: str
-    name: Optional[str]
+    name: str | None = None
 
     @property
-    def components(self):
+    def components(self) -> list[Component]:
         response = self._rest_client.get(
             f"v2/engine/compute/nodes/all/{self.id}/components/",
         )
@@ -265,7 +273,7 @@ class ComputeNode(APIObject):
         )
         return [Server(**s) for s in response.json()]
 
-    def report_version(self, version: str):
+    def report_version(self, version: str) -> None:
         response = self._rest_client.post(
             f"v2/engine/compute/nodes/all/{self.id}/update-version/",
             data={"agent_version": version},
@@ -294,7 +302,7 @@ class EngineAction(BaseModel):
 
 
 class DeployedComponent(Component):
-    container: Optional[Container]
+    container: Container | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -302,11 +310,11 @@ class DeployedComponent(Component):
 
 class ComputeNodeUsage(APIObject):
     compute_node: str
-    timestamp: Optional[str]
+    timestamp: str | None = None
     cpu_percent: float
     memory_percent: float
 
-    def save(self):
+    def save(self) -> None:
         self._rest_client.post(
             f"v2/engine/compute/nodes/all/{self.compute_node}/usage/",
             data={
