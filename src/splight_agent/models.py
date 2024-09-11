@@ -21,7 +21,8 @@ class APIObject(BaseModel):
     @cached_property
     def _rest_client(self) -> RestClient:
         return RestClient()
-    
+
+
 class HubInstance(APIObject):
     id: str
     name: str
@@ -71,7 +72,6 @@ class HubComponent(HubInstance):
 
 
 class HubServer(HubInstance):
-
     @property
     def _image_link(self) -> str:
         params = {"type": "image"}
