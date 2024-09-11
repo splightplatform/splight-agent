@@ -81,10 +81,10 @@ class Orchestrator:
 
     def kill(self, sig: int, frame: FrameType):
         logger.info(f"Received signal {sig}. Gracefully stopping Agent...")
-        stopped_components = self._engine.stop_all()
-        logger.info(f"Stopped {len(stopped_components)} components")
+        stopped_instances = self._engine.stop_all()
+        logger.info(f"Stopped {len(stopped_instances)} components")
         logger.info("Waiting for components to be stopped in the platform...")
-        self._dispatcher.wait_for_components_to_stop(stopped_components)
+        self._dispatcher.wait_for_instances_to_stop(stopped_instances)
         logger.info("All components stopped")
         self._beacon.stop()
         self._exporter.stop()

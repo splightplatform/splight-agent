@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Callable, List, Optional, TypedDict
+from typing import Callable, List, Optional, TypedDict, Union
 
 import docker
 from docker.models.containers import Container, Image
@@ -16,8 +16,11 @@ from splight_agent.models import (
     Component,
     ComponentDeploymentStatus,
     ComputeNode,
+    DeployableInstance,
     EngineAction,
     HubComponent,
+    HubServer,
+    Server,
 )
 from splight_agent.settings import RUNNER_CLI_VERSION
 
@@ -49,7 +52,7 @@ class ContainerExecutionError(Exception):
 
 class Engine:
     """
-    The engine is responsible for handling the execution of components
+    The engine is responsible for handling the execution of instances
     """
 
     RESTART_POLICY_MAP = {
@@ -77,6 +80,8 @@ class Engine:
         self._ecr_repository = ecr_repository
         self._component_environment = componenent_environment
         self._docker_client = docker.from_env()
+        self._docker_network = self._get_or_create_network()
+        self._add_containers_to_network()
 
     @property
     def handlers(self) -> dict[EngineActionType, Callable[[Component], None]]:
@@ -86,53 +91,73 @@ class Engine:
             EngineActionType.RESTART: self.restart,
         }
 
-    def _get_component_restart_policy(
-        self, component: Component
+    def _get_or_create_network(self) -> str:
+        network_name = self._compute_node.id
+        try:
+            net = self._docker_client.networks.get(network_name)
+        except docker.errors.NotFound:
+            net = self._docker_client.networks.create(
+                name=network_name, driver="bridge"
+            )
+        return net
+
+    def _add_containers_to_network(self) -> None:
+        containers = self._get_deployed_containers()
+        for container in containers:
+            if (
+                self._docker_network.name
+                not in container.attrs["NetworkSettings"]["Networks"]
+            ):
+                self._docker_network.connect(container)
+
+    def _get_instance_restart_policy(
+        self, instance: DeployableInstance
     ) -> Optional[dict]:
-        if component.deployment_restart_policy:
+        if instance.deployment_restart_policy:
             return {
                 "Name": self.RESTART_POLICY_MAP[
-                    component.deployment_restart_policy
+                    instance.deployment_restart_policy
                 ],
                 "MaximumRetryCount": 0,
             }
         return None
 
-    def _get_mem_limit(self, component: Component) -> str:
-        map_ = self.DEPLOYMENT_SIZE_MAP.get(
-            component.deployment_capacity, None
-        )
+    def _get_mem_limit(self, instance: DeployableInstance) -> str:
+        map_ = self.DEPLOYMENT_SIZE_MAP.get(instance.deployment_capacity, None)
         if map_:
             return map_["memory"]
         return None
 
-    def _get_labels(self, component: Component) -> dict:
+    def _get_labels(self, instance: DeployableInstance) -> dict:
+        deploy_label = instance.get_deploy_label()
         labels = {
             "AgentID": self._compute_node.id,
-            "ComponentID": component.id,
-            "StateHash": component.to_hash(),
+            deploy_label: instance.id,
+            "StateHash": instance.to_hash(),
         }
         return labels
 
-    def _download_image(self, hub_component: HubComponent) -> bytes:
+    def _download_image(
+        self, hub_instance: Union[HubComponent, HubServer]
+    ) -> bytes:
         logger.info(
-            f"Starting image download for component: {hub_component.name} {hub_component.version}"
+            f"Starting image download for component: {hub_instance.name} {hub_instance.version}"
         )
         try:
-            image_file = hub_component.get_image_file()
+            image_bytes = hub_instance.get_image_file()
         except Exception as e:
             # TODO: Maybe retry? or fail component?
             logger.error(e)
             raise ImageError(
-                f"Failed to download image for component: {hub_component.name}"
+                f"Failed to download image for component: {hub_instance.name}"
             )
-        return image_file
+        return image_bytes
 
     def _load_image(
         self,
         image_file: bytes,
-        hub_component_name: str,
-        hub_component_version: str,
+        hub_instance_name: str,
+        hub_instance_version: str,
     ) -> Image:
         try:
             with open(image_file, "rb") as fid:
@@ -140,9 +165,41 @@ class Engine:
             image = images[0]
         except Exception as exc:
             raise ImageError(
-                f"Failed to load image for component: {hub_component_name}"
+                f"Failed to load image for instance: {hub_instance_name} {hub_instance_version}"
             ) from exc
         return image
+
+    def _get_command(self, instance: DeployableInstance) -> List[str]:
+        if instance.instance_type == "component":
+            return [
+                "./main.py",
+                f"--component-id={instance.id}",
+            ]
+        return None
+
+    def _get_environment(self, instance: DeployableInstance) -> dict[str, str]:
+        env = {
+            **self._component_environment,
+            "LOG_LEVEL": instance.deployment_log_level,
+            "PROCESS_TYPE": instance.instance_type,
+        }
+        if instance.instance_type == "component":
+            env["COMPONENT_ID"] = instance.id
+        elif instance.instance_type == "server":
+            env["SPLIGHT_SERVER_ID"] = instance.id
+            for env_var in instance.env_vars:
+                env[env_var.name] = env_var.value
+        return env
+
+    def _get_ports(self, instance: DeployableInstance) -> dict | None:
+        if instance.instance_type == "server":
+            ports = {}
+            for port in instance.ports:
+                ports[
+                    f"{port.internal_port}/{port.protocol}"
+                ] = port.exposed_port
+            return ports
+        return None
 
     def _run_container(
         self,
@@ -150,9 +207,10 @@ class Engine:
         image: Image,
         environment: dict,
         labels: dict,
-        command: List[str],
         restart_policy: dict,
         mem_limit: str,
+        command: list[str] | None = None,
+        ports: dict | None = None,
     ) -> Container:
         log_config = {
             "type": "json-file",
@@ -164,13 +222,14 @@ class Engine:
                 name=name,
                 detach=True,
                 environment=environment,
-                network_mode="host",  # TODO: delete after testing
                 remove=False,
                 command=command,
                 labels=labels,
                 restart_policy=restart_policy,
                 mem_limit=mem_limit,
                 log_config=log_config,
+                ports=ports,
+                network=self._docker_network.name,
                 healthcheck={
                     "test": [
                         "CMD",
@@ -190,72 +249,45 @@ class Engine:
             )
         except Exception:
             raise ContainerExecutionError(
-                f"Failed to run container for component: {labels['ComponentID']}"
+                f"Failed to run container for instance: {name}"
             )
 
-    def run(self, component: Component):
-        component.deployment_status = ComponentDeploymentStatus.PENDING
-        component.update_status()
+    def run(self, instance: DeployableInstance):
+        instance.deployment_status = ComponentDeploymentStatus.PENDING
+        instance.update_status()
 
+        hub_instance = instance.get_hub_instance()
         # Download image
         try:
-            image_file = self._download_image(component.hub_component)
-
+            image_file = self._download_image(hub_instance)
             # Load image
             image = self._load_image(
                 image_file=image_file,
-                hub_component_name=component.hub_component.name,
-                hub_component_version=component.hub_component.version,
+                hub_instance_name=hub_instance.name,
+                hub_instance_version=hub_instance.version,
             )
         except ImageError as e:
             os.remove(image_file)
-            component.deployment_status = ComponentDeploymentStatus.FAILED
-            component.update_status()
+            instance.deployment_status = ComponentDeploymentStatus.FAILED
+            instance.update_status()
             logger.error(e)
             return
         else:
             os.remove(image_file)
 
-        # TODO: temporary fix for new runner
-        labels = self._get_labels(component)
-        cli_version = (
-            parse_version(component.hub_component.splight_cli_version)
-            if component.hub_component.splight_cli_version
-            else None
-        )
-        is_legacy = (
-            cli_version is not None
-            and cli_version.release < RUNNER_CLI_VERSION.release
-        )
-        if is_legacy:
-            labels["Legacy"] = "true"
-            run_spec = {
-                "name": component.hub_component.name,
-                "version": component.hub_component.version,
-                "input": component.input,
-            }
-            command = ["python", "runner.py", "-r", json.dumps(run_spec)]
-        else:
-            command = [
-                "./main.py",
-                f"--component-id={component.id}",
-            ]
-
         # Run container
-        logger.info(f"Running conatiner for component: {component.id}")
+        logger.info(
+            f"Running container for {instance.instance_type}: {instance.id}"
+        )
         self._run_container(
             image=image,
-            name=component.id,
-            environment={
-                **self._component_environment,
-                "LOG_LEVEL": component.deployment_log_level,
-                "COMPONENT_ID": component.id,
-                "PROCESS_TYPE": "component",
-            },
-            labels=labels,
-            command=command,
-            restart_policy=self._get_component_restart_policy(component),
-            mem_limit=self._get_mem_limit(component),
+            name=instance.id,
+            environment=self._get_environment(instance),
+            labels=self._get_labels(instance),
+            command=self._get_command(instance),
+            restart_policy=self._get_instance_restart_policy(instance),
+            mem_limit=self._get_mem_limit(instance),
+            ports=self._get_ports(instance),
             # TODO: add cpu limit
         )
 
@@ -263,64 +295,68 @@ class Engine:
         handler = self.handlers.get(action.type)
         if not handler:
             raise InvalidActionError(f"Invalid action type: {action.type}")
-        handler(action.component)
+        handler(action.instance)
 
-    def stop(self, component: Component) -> None:
-        containers = self._get_deployed_containers(component.id)
+    def stop(self, instance: DeployableInstance) -> None:
+        containers = self._get_deployed_containers(instance)
         if not containers:
             return
         try:
             for container in containers:
                 logger.info(
-                    f"Stopping container for component: {component.id}"
+                    f"Stopping container for {instance.instance_type}: {instance.id}"
                 )
                 container.stop()
                 container.remove()
-            component.deployment_status = ComponentDeploymentStatus.STOPPED
-            component.update_status()
+            instance.deployment_status = ComponentDeploymentStatus.STOPPED
+            instance.update_status()
         except Exception:
             raise ContainerExecutionError(
-                f"Failed to stop container for component: {component.id}"
+                f"Failed to stop container for {instance.instance_type}: {instance.id}"
             )
 
-    def restart(self, component: Component) -> None:
-        logger.info(f"Restarting component: {component.id}")
-        self.stop(component)
-        self.run(component)
+    def restart(self, instance: DeployableInstance) -> None:
+        logger.info(f"Restarting instance: {instance.id}")
+        self.stop(instance)
+        self.run(instance)
 
     def _get_deployed_containers(
-        self, component_id: Optional[str] = None
+        self, instance: Optional[DeployableInstance] = None
     ) -> List[Container]:
         labels = [f"AgentID={self._compute_node.id}"]
-        if component_id:
-            labels.append(f"ComponentID={component_id}")
+        if instance:
+            labels.append(f"{instance.get_deploy_label()}={instance.id}")
         containers = self._docker_client.containers.list(
             filters={"label": labels},
             all=True,
         )
         return containers
 
-    def get_component_hash(self, component_id: str) -> str:
-        containers = self._get_deployed_containers(component_id)
+    def get_instance_hash(self, instance: DeployableInstance) -> str:
+        containers = self._get_deployed_containers(instance)
         if not containers:
             return None
         return containers[0].labels["StateHash"]
 
-    def stop_all(self) -> List[Component]:
+    def stop_all(self) -> List[DeployableInstance]:
         """
-        Stops all running components and returns the ids of the stopped components.
+        Stop all running instances and return the ids.
         """
-        stopped_components: List[Component] = []
+        setopped_instances: List[DeployableInstance] = []
         deployed_containers = self._get_deployed_containers()
         for container in deployed_containers:
-            component_id = container.labels["ComponentID"]
-            component = Component(id=component_id)
+            instance_id = container.labels.get("ComponentID", None)
+            if not instance_id:
+                instance_id = container.labels.get("ServerID", None)
+                instance = Server(id=instance_id)
+            else:
+                instance = Component(id=instance_id)
             try:
-                self.stop(component)
-                stopped_components.append(component)
+                self.stop(instance)
+                setopped_instances.append(instance)
             except ContainerExecutionError:
                 logger.warning(
-                    f"Failed to stop component: {component.name}. "
-                    f"Skipping component..."
+                    f"Failed to stop {instance.instance_type}: {instance.name}. "
+                    f"Skipping {instance.instance_type}..."
                 )
-        return stopped_components
+        return setopped_instances

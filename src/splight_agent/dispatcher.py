@@ -4,9 +4,9 @@ from typing import List, Optional
 from splight_agent.engine import Engine, EngineAction, EngineActionType
 from splight_agent.logging import SplightLogger
 from splight_agent.models import (
-    Component,
     ComponentDeploymentStatus,
     ComputeNode,
+    DeployableInstance,
 )
 
 logger = SplightLogger()
@@ -28,54 +28,59 @@ class Dispatcher:
         self._compute_node = compute_node
         self._engine = engine
 
-    def _compute_action(self, component: Component) -> Optional[EngineAction]:
-        component_hash = self._engine.get_component_hash(component.id)
-        if component.deployment_active and not component_hash:
-            logger.info(f"Received RUN action for component {component.id}")
-            return EngineAction(type=EngineActionType.RUN, component=component)
+    def _compute_action(
+        self, instance: DeployableInstance
+    ) -> Optional[EngineAction]:
+        instance_hash = self._engine.get_instance_hash(instance)
+        if instance.deployment_active and not instance_hash:
+            logger.info(
+                f"Received RUN action {instance.instance_type} {instance.id}"
+            )
+            return EngineAction(type=EngineActionType.RUN, instance=instance)
         elif (
-            component.deployment_active
-            and component_hash
-            and component_hash != component.to_hash()
+            instance.deployment_active
+            and instance_hash
+            and instance_hash != instance.to_hash()
         ):
             logger.info(
-                f"Received RESTART action for component {component.id}"
+                f"Received RESTART action {instance.instance_type} {instance.id}"
             )
             return EngineAction(
-                type=EngineActionType.RESTART, component=component
+                type=EngineActionType.RESTART, instance=instance
             )
-        elif not component.deployment_active:
-            if component_hash:
+        elif not instance.deployment_active:
+            if instance_hash:
                 logger.info(
-                    f"Received STOP action for component {component.id}"
+                    f"Received STOP action {instance.instance_type} {instance.id}"
                 )
                 return EngineAction(
-                    type=EngineActionType.STOP, component=component
+                    type=EngineActionType.STOP, instance=instance
                 )
             elif (
-                component.deployment_status
-                != ComponentDeploymentStatus.STOPPED
+                instance.deployment_status != ComponentDeploymentStatus.STOPPED
             ):
                 logger.info(
-                    f"Component {component.id} has status {component.deployment_status} and should be STOPPED. Setting status to STOPPED."
+                    f"Instance {instance.id} has status {instance.deployment_status} and should be STOPPED. Setting status to STOPPED."
                 )
-                component.deployment_status = ComponentDeploymentStatus.STOPPED
-                component.update_status()
+                instance.deployment_status = ComponentDeploymentStatus.STOPPED
+                instance.update_status()
                 return None
         return None
 
-    def _compute_actions(self, components: list[Component]):
-        return [
+    def _compute_actions(self) -> List[EngineAction]:
+        instances = self._compute_node.components + self._compute_node.servers
+        actions = [
             action
-            for component in components
-            if (action := self._compute_action(component)) is not None
+            for instance in instances
+            if (action := self._compute_action(instance)) is not None
         ]
+        return actions
 
     def start(self):
         logger.info("Dispatcher started")
         while True:
             try:
-                actions = self._compute_actions(self._compute_node.components)
+                actions = self._compute_actions()
                 for action in actions:
                     try:
                         self._engine.handle_action(action)
@@ -85,20 +90,20 @@ class Dispatcher:
                         )
             except Exception as e:
                 logger.error(
-                    f"Failed to fetch components or compute actions: {e}"
+                    f"Failed to fetch instances or compute actions: {e}"
                 )
             finally:
                 time.sleep(self._poll_interval)
 
-    def wait_for_components_to_stop(self, components: List[Component]):
+    def wait_for_instances_to_stop(self, instances: List[DeployableInstance]):
         while True:
-            for index, component in enumerate(components):
-                component.refresh()
+            for index, instance in enumerate(instances):
+                instance.refresh()
                 if (
-                    component.deployment_status
+                    instance.deployment_status
                     == ComponentDeploymentStatus.STOPPED
                 ):
-                    components.pop(index)
-            if not components:
+                    instances.pop(index)
+            if not instances:
                 break
             time.sleep(self._poll_interval)
