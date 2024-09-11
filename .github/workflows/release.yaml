@@ -60,7 +60,7 @@ jobs:
       - name: Build agent image
         working-directory: .
         run: |
-          docker-compose -f docker-compose.yml build splight-agent
+          docker compose -f docker-compose.yml build splight-agent
           docker tag splight-agent $SPLIGHT_AGENT_ECR:$VERSION
         env:
           SPLIGHT_AGENT_ECR: ${{ secrets.SPLIGHT_AGENT_ECR }}
