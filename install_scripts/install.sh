@@ -60,7 +60,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.7.1"
+AGENT_VERSION="0.7.2"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 
@@ -98,7 +98,7 @@ else
     echo $TOKEN | base64 --decode > $CONFIG_FILE
 fi
 
-PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+')
+PROC_PATH=$(mount -t proc | egrep -o '/[^ ]+' || echo "")
 REPORT_USAGE=false
 if [ -d "$PROC_PATH" ]; then
     REPORT_USAGE=true
