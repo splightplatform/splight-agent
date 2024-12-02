@@ -1,5 +1,5 @@
-FROM --platform=linux/amd64 python:3.11.7-slim
-
+FROM --platform=linux/amd64 609067598877.dkr.ecr.us-east-1.amazonaws.com/devops/python:3.11.10
+USER root
 WORKDIR /whl
 RUN pip install --upgrade splight-runner
 
