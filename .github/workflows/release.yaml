@@ -39,6 +39,10 @@ jobs:
   upload_agent_image:
     runs-on: ubuntu-latest
     name: Push agent image to ECR
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     steps:
       - name: Checkout to feature branch
         uses: actions/checkout@v3
@@ -46,9 +50,10 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-east-1
+          audience: sts.amazonaws.com
+          role-to-assume: ${{ secrets.SPLIGHT_AGENT_CICD_ROLE_ARN }}
+          role-skip-session-tagging: true
 
       - name: Login to Amazon ECR Private
         id: login-ecr-private
