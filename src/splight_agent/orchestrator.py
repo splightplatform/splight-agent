@@ -44,6 +44,7 @@ class Orchestrator:
         return Beacon(
             compute_node=self._compute_node,
             ping_interval=self._settings.API_PING_INTERVAL,
+            api_version=self._settings.API_VERSION,
         )
 
     def _create_exporter(self) -> Exporter:
