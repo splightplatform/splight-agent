@@ -10,6 +10,8 @@ services:
     container_name: splight-agent
     restart: unless-stopped
     tty: true
+    command: bash
+    logging: *logging
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -17,14 +19,15 @@ services:
     volumes:
       - .:/code
       - /var/run/docker.sock:/var/run/docker.sock
-      - $HOME/.splight/agent_config:/root/.splight/agent_config
-    environment:
-      - LOG_LEVEL=10
-      - REPORT_USAGE=true
-      - PYTHONPATH=/code/src
-      - PROCESS_TYPE=agent
-      - COMPUTE_NODE_ID=$COMPUTE_NODE_ID
-      - SPLIGHT_ACCESS_ID=$SPLIGHT_ACCESS_ID
-      - SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY
-      - SPLIGHT_PLATFORM_API_HOST=$SPLIGHT_PLATFORM_API_HOST
+      # - $HOME/.splight/agent_config:/root/.splight/agent_config
+    env_file: .env
+    # environment:
+    #   - LOG_LEVEL=10
+    #   - REPORT_USAGE=true
+    #   - PYTHONPATH=/code/src
+    #   - COMPUTE_NODE_ID=$COMPUTE_NODE_ID
+    #   - SPLIGHT_ACCESS_ID=$SPLIGHT_ACCESS_ID
+    #   - SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY
+    #   - SPLIGHT_PLATFORM_API_HOST=$SPLIGHT_PLATFORM_API_HOST
+    #   - PROCESS_TYPE=agent
 

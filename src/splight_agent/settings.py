@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from typing import Any, Dict, Tuple
 
 import yaml
@@ -27,6 +28,11 @@ def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
     return config
 
 
+class APIVersion(str, Enum):
+    V3 = "v3"
+    V4 = "v4"
+
+
 class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
     SPLIGHT_SECRET_KEY: str = ""
@@ -39,6 +45,7 @@ class SplightSettings(BaseSettings, Singleton):
     API_PING_INTERVAL: int = 30
     REPORT_USAGE: bool = True
     CPU_PERCENT_SAMPLES: int = 4
+    API_VERSION: APIVersion = APIVersion.V3
 
     def configure(self, **params: Dict):
         self.parse_obj(params)
