@@ -37,6 +37,7 @@ class Orchestrator:
                 "SPLIGHT_ACCESS_ID": self._settings.SPLIGHT_ACCESS_ID,
                 "SPLIGHT_SECRET_KEY": self._settings.SPLIGHT_SECRET_KEY,
                 "SPLIGHT_PLATFORM_API_HOST": self._settings.SPLIGHT_PLATFORM_API_HOST,
+                "API_VERSION": self._settings.API_VERSION,
             },
         )
 

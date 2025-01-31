@@ -32,6 +32,9 @@ class APIVersion(str, Enum):
     V3 = "v3"
     V4 = "v4"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class SplightSettings(BaseSettings, Singleton):
     SPLIGHT_ACCESS_ID: str = ""
