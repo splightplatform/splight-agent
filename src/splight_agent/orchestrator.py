@@ -37,6 +37,7 @@ class Orchestrator:
                 "SPLIGHT_ACCESS_ID": self._settings.SPLIGHT_ACCESS_ID,
                 "SPLIGHT_SECRET_KEY": self._settings.SPLIGHT_SECRET_KEY,
                 "SPLIGHT_PLATFORM_API_HOST": self._settings.SPLIGHT_PLATFORM_API_HOST,
+                "API_VERSION": self._settings.API_VERSION,
             },
         )
 
@@ -44,6 +45,7 @@ class Orchestrator:
         return Beacon(
             compute_node=self._compute_node,
             ping_interval=self._settings.API_PING_INTERVAL,
+            api_version=self._settings.API_VERSION,
         )
 
     def _create_exporter(self) -> Exporter:

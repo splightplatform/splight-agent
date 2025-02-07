@@ -13,16 +13,19 @@ class Beacon:
     The beacon periodically pings the API to signal that the agent is still alive
     """
 
-    def __init__(self, compute_node: ComputeNode, ping_interval: int) -> None:
+    def __init__(
+        self, compute_node: ComputeNode, ping_interval: int, api_version: str
+    ) -> None:
         self._ping_interval = ping_interval
         self._thread = Thread(target=self._ping_forever, daemon=True)
         self._stop = Event()
         self._client = RestClient()
         self._compute_node = compute_node
+        self._base_url = f"{api_version}/engine/compute/nodes/all"
 
     def _ping(self):
         return self._client.post(
-            f"v2/engine/compute/nodes/all/{self._compute_node.id}/healthcheck/",
+            f"{self._base_url}/{self._compute_node.id}/healthcheck/",
             {},
         )
 

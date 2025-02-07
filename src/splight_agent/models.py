@@ -13,6 +13,7 @@ from splight_agent.constants import IMAGE_DIRECTORY, EngineActionType
 from splight_agent.exceptions import DownloadError
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
+from splight_agent.settings import APIVersion, settings
 
 logger = SplightLogger(__name__)
 
@@ -47,8 +48,9 @@ class HubComponent(HubInstance):
     @property
     def _image_link(self) -> str:
         params = {"type": "image"}
+        url_prefix = f"{settings.API_VERSION}/engine/hub/component/versions"
         response = self._rest_client.get(
-            f"v2/hub/component/versions/{self.id}/download_url/",
+            f"{url_prefix}/{self.id}/download_url/",
             params=params,
         )
         response.raise_for_status()
@@ -75,8 +77,9 @@ class HubServer(HubInstance):
     @property
     def _image_link(self) -> str:
         params = {"type": "image"}
+        url_prefix = f"{settings.API_VERSION}/engine/hub/server/versions"
         response = self._rest_client.get(
-            f"v2/hub/server/versions/{self.id}/download_url/",
+            f"{url_prefix}/{self.id}/download_url/",
             params=params,
         )
         response.raise_for_status()
@@ -215,7 +218,7 @@ class DeployableInstance(APIObject, ABC):
 
 class Component(DeployableInstance):
     _COMPARABLE_FIELDS = ["input"]
-    _INSTANCE_URL = "v2/engine/component/components"
+    _INSTANCE_URL = f"{settings.API_VERSION}/engine/component/components"
 
     input: list[dict[str, Any]]
     hub_component: HubComponent
@@ -241,7 +244,7 @@ class EnvVar(BaseModel):
 
 class Server(DeployableInstance):
     _COMPARABLE_FIELDS = ["config", "ports", "env_vars"]
-    _INSTANCE_URL = "v2/engine/server/servers"
+    _INSTANCE_URL = f"{settings.API_VERSION}/engine/server/servers"
 
     config: list[dict[str, Any]]
     ports: list[Port]
@@ -261,21 +264,24 @@ class ComputeNode(APIObject):
 
     @property
     def components(self) -> list[Component]:
+        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
         response = self._rest_client.get(
-            f"v2/engine/compute/nodes/all/{self.id}/components/",
+            f"{url_prefix}/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
 
     @property
     def servers(self) -> list[Server]:
+        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
         response = self._rest_client.get(
-            f"v2/engine/compute/nodes/all/{self.id}/servers/",
+            f"{url_prefix}/{self.id}/servers/",
         )
         return [Server(**s) for s in response.json()]
 
     def report_version(self, version: str) -> None:
+        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
         response = self._rest_client.post(
-            f"v2/engine/compute/nodes/all/{self.id}/update-version/",
+            f"{url_prefix}/{self.id}/update-version/",
             data={"agent_version": version},
         )
         return response
@@ -286,7 +292,7 @@ T = TypeVar("T", bound=BaseModel)
 
 def partial(model: Type[T]) -> Type[T]:
     class OptionalModel(model):
-        ...
+        pass
 
     for field in OptionalModel.__fields__.values():
         field.required = False
@@ -315,8 +321,9 @@ class ComputeNodeUsage(APIObject):
     memory_percent: float
 
     def save(self) -> None:
+        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
         self._rest_client.post(
-            f"v2/engine/compute/nodes/all/{self.compute_node}/usage/",
+            f"{url_prefix}/{self.compute_node}/usage/",
             data={
                 "cpu_percent": self.cpu_percent,
                 "memory_percent": self.memory_percent,
