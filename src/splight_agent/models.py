@@ -48,7 +48,7 @@ class HubComponent(HubInstance):
     @property
     def _image_link(self) -> str:
         params = {"type": "image"}
-        url_prefix = f"{settings.API_VERSION}/engine/hub/component/versions"
+        url_prefix = f"{settings.API_VERSION}/engine/hubcomponent/versions"
         response = self._rest_client.get(
             f"{url_prefix}/{self.id}/download_url/",
             params=params,
@@ -77,7 +77,7 @@ class HubServer(HubInstance):
     @property
     def _image_link(self) -> str:
         params = {"type": "image"}
-        url_prefix = f"{settings.API_VERSION}/engine/hub/server/versions"
+        url_prefix = f"{settings.API_VERSION}/engine/hubserver/versions"
         response = self._rest_client.get(
             f"{url_prefix}/{self.id}/download_url/",
             params=params,
