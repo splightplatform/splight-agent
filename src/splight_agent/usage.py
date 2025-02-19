@@ -1,3 +1,4 @@
+import shutil
 import time
 from threading import Thread
 from typing import Optional
@@ -30,6 +31,11 @@ class UsageReporter:
         """Returns memory percent"""
         return psutil.virtual_memory().percent
 
+    def _get_disk_percent(self) -> float:
+        """Returns memory disk percent"""
+        total, used, _ = shutil.disk_usage("/")
+        return round(used / total * 100, 2)
+
     def _report_usage(self) -> None:
         while self._running:
             try:
@@ -37,6 +43,7 @@ class UsageReporter:
                     compute_node=self._compute_node.id,
                     cpu_percent=self._get_cpu_percent(),
                     memory_percent=self._get_memory_percent(),
+                    disk_percent=self._get_disk_percent(),
                 )
                 usage.save()
             except Exception as e:

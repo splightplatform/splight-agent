@@ -319,6 +319,7 @@ class ComputeNodeUsage(APIObject):
     timestamp: str | None = None
     cpu_percent: float
     memory_percent: float
+    disk_percent: float
 
     def save(self) -> None:
         url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
@@ -327,5 +328,6 @@ class ComputeNodeUsage(APIObject):
             data={
                 "cpu_percent": self.cpu_percent,
                 "memory_percent": self.memory_percent,
+                "disk_percent": self.disk_percent,
             },
         )
