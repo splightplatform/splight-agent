@@ -331,3 +331,18 @@ class ComputeNodeUsage(APIObject):
                 "disk_percent": self.disk_percent,
             },
         )
+
+
+class ComputeNodeLatency(APIObject):
+    compute_node: str
+    timestamp: str | None = None
+    latency: float
+
+    def save(self) -> None:
+        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
+        self._rest_client.post(
+            f"{url_prefix}/{self.compute_node}/latency/",
+            data={
+                "latency": self.latency,
+            },
+        )

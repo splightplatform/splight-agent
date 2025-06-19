@@ -9,9 +9,8 @@ services:
     image: splight-agent:latest
     container_name: splight-agent
     restart: unless-stopped
+    entrypoint: python3 main.py
     tty: true
-    entrypoint: bash
-    # command: bash
     logging: *logging
     build:
       context: .
@@ -25,9 +24,4 @@ services:
       - LOG_LEVEL=10
       - REPORT_USAGE=true
       - PYTHONPATH=/code/src
-      - COMPUTE_NODE_ID=$COMPUTE_NODE_ID
-      - SPLIGHT_ACCESS_ID=$SPLIGHT_ACCESS_ID
-      - SPLIGHT_SECRET_KEY=$SPLIGHT_SECRET_KEY
-      - SPLIGHT_PLATFORM_API_HOST=$SPLIGHT_PLATFORM_API_HOST
       - PROCESS_TYPE=agent
-

@@ -10,6 +10,7 @@ from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.settings import SplightSettings
 from splight_agent.usage import UsageReporter
+from splight_agent.latency import LatencyReporter
 
 __version__ = metadata.version("splight-agent")
 
@@ -63,17 +64,25 @@ class Orchestrator:
             compute_node=self._compute_node,
             cpu_percent_samples=self._settings.CPU_PERCENT_SAMPLES,
         )
+    
+    def _create_latency_reporter(self) -> LatencyReporter:
+        return LatencyReporter(
+            compute_node=self._compute_node,
+            api_version=self._settings.API_VERSION,
+        )
 
     def __init__(self) -> None:
         self._engine = self._create_engine()
         self._beacon = self._create_beacon()
         self._exporter = self._create_exporter()
         self._dispatcher = self._create_dispatcher(self._engine)
+        self._latency_reporter = self._create_latency_reporter()
 
     def start(self):
         self._report_agent_version()
         self._exporter.start()
         self._beacon.start()
+        self._latency_reporter.start()
         if self._settings.REPORT_USAGE:
             self._usage_reporter = self._create_usage_reporter()
             self._usage_reporter.start()
