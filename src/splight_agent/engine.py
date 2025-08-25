@@ -79,7 +79,7 @@ class Engine:
         self._workspace_name = workspace_name
         self._ecr_repository = ecr_repository
         self._component_environment = componenent_environment
-        self._docker_client = docker.from_env()
+        self._docker_client = docker.from_env(timeout=600)
         self._docker_network = self._get_or_create_network()
         self._add_containers_to_network()
 
