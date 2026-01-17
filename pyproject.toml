@@ -33,3 +33,11 @@ line_length = 79
 
 [tool.ruff]
 line-length = 79
+
+# Constraints on transitive dependencies
+# Version bumps (for example for security alerts) should go here.
+[tool.uv]
+constraint-dependencies = [
+ # https://splight.atlassian.net/browse/SECUR-397
+ "urllib3>=2.6.3",
+]
