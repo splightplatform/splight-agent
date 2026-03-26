@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splight-agent"
-version = "0.8.4"
+version = "0.8.5"
 description = ""
 authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
@@ -33,3 +33,13 @@ line_length = 79
 
 [tool.ruff]
 line-length = 79
+
+# Constraints on transitive dependencies
+# Version bumps (for example for security alerts) should go here.
+[tool.uv]
+constraint-dependencies = [
+ # https://splight.atlassian.net/browse/SECUR-397
+ "urllib3>=2.6.3",
+ # https://splight.atlassian.net/browse/SECUR-518
+ "requests>=2.33.0",
+]
