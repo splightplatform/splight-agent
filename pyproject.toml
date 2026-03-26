@@ -40,4 +40,6 @@ line-length = 79
 constraint-dependencies = [
  # https://splight.atlassian.net/browse/SECUR-397
  "urllib3>=2.6.3",
+ # https://splight.atlassian.net/browse/SECUR-518
+ "requests>=2.33.0",
 ]
