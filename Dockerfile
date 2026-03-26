@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.11.7-slim
+FROM --platform=linux/amd64 python:3.11.15-slim
 
 WORKDIR /whl
 RUN pip install --upgrade splight-runner
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-RUN apt update --fix-missing && \
+RUN apt update --fix-missing && apt-get upgrade -y && \
   apt install -y gcc
 
 RUN pip install --upgrade pip && pip install poetry==1.5.1
