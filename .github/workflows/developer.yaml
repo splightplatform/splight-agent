@@ -5,8 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Black
     steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: psf/black@35ea67920b7f6ac8e09be1c47278752b1e827f76 # stable
         with:
           options: "--check --diff"
           version: "23.1.0"
@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Isort
     steps:
-      - uses: actions/checkout@v3
-      - uses: isort/isort-action@master
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: isort/isort-action@754522c780bf51012c35d6e3b47a52e3900a8ed4 # master
         with:
           configuration: "--check-only --diff"
           isortVersion: "5.12.0"
@@ -24,7 +24,7 @@ jobs:
     name: Verify version is a valid and is higher than previous version
     steps:
       - name: Checkout feature branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           fetch-depth: 0
       - name: Save previous version
