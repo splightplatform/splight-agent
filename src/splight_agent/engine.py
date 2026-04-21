@@ -4,7 +4,6 @@ from typing import Callable, List, Optional, TypedDict, Union
 
 import docker
 from docker.models.containers import Container, Image
-from pkg_resources import parse_version
 
 from splight_agent.constants import (
     DeploymentRestartPolicy,
@@ -19,8 +18,6 @@ from splight_agent.models import (
     DeployableInstance,
     EngineAction,
     HubComponent,
-    HubServer,
-    Server,
 )
 from splight_agent.settings import RUNNER_CLI_VERSION
 
@@ -138,20 +135,25 @@ class Engine:
         return labels
 
     def _download_image(
-        self, hub_instance: Union[HubComponent, HubServer]
+        self, hub_instance: HubComponent
     ) -> bytes:
         logger.info(
             f"Starting image download for component: {hub_instance.name} {hub_instance.version}"
         )
-        try:
-            image_bytes = hub_instance.get_image_file()
-        except Exception as e:
-            # TODO: Maybe retry? or fail component?
-            logger.error(e)
-            raise ImageError(
-                f"Failed to download image for component: {hub_instance.name}"
-            )
-        return image_bytes
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                image_bytes = hub_instance.get_image_file()
+                return image_bytes
+            except Exception as e:
+                logger.error(
+                    f"Failed to download image for component: {hub_instance.name} "
+                    f"(attempt {attempt}/{max_attempts}): {e}"
+                )
+                if attempt == max_attempts:
+                    raise ImageError(
+                        f"Failed to download image for component: {hub_instance.name}"
+                    ) from e
 
     def _load_image(
         self,
@@ -183,12 +185,7 @@ class Engine:
             "LOG_LEVEL": instance.deployment_log_level,
             "PROCESS_TYPE": instance.instance_type,
         }
-        if instance.instance_type == "component":
-            env["COMPONENT_ID"] = instance.id
-        elif instance.instance_type == "server":
-            env["SPLIGHT_SERVER_ID"] = instance.id
-            for env_var in instance.env_vars:
-                env[env_var.name] = env_var.value
+        env["COMPONENT_ID"] = instance.id
         return env
 
     def _get_ports(self, instance: DeployableInstance) -> dict | None:
