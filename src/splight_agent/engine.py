@@ -4,7 +4,6 @@ from typing import Callable, List, Optional, TypedDict, Union
 
 import docker
 from docker.models.containers import Container, Image
-from pkg_resources import parse_version
 
 from splight_agent.constants import (
     DeploymentRestartPolicy,
@@ -19,8 +18,6 @@ from splight_agent.models import (
     DeployableInstance,
     EngineAction,
     HubComponent,
-    HubServer,
-    Server,
 )
 from splight_agent.settings import RUNNER_CLI_VERSION
 
@@ -38,16 +35,13 @@ class ComponentEnvironment(TypedDict):
     SPLIGHT_PLATFORM_API_HOST: str
 
 
-class InvalidActionError(Exception):
-    ...
+class InvalidActionError(Exception): ...
 
 
-class ImageError(Exception):
-    ...
+class ImageError(Exception): ...
 
 
-class ContainerExecutionError(Exception):
-    ...
+class ContainerExecutionError(Exception): ...
 
 
 class Engine:
@@ -137,9 +131,7 @@ class Engine:
         }
         return labels
 
-    def _download_image(
-        self, hub_instance: Union[HubComponent, HubServer]
-    ) -> bytes:
+    def _download_image(self, hub_instance: HubComponent) -> bytes:
         logger.info(
             f"Starting image download for component: {hub_instance.name} {hub_instance.version}"
         )
@@ -183,21 +175,16 @@ class Engine:
             "LOG_LEVEL": instance.deployment_log_level,
             "PROCESS_TYPE": instance.instance_type,
         }
-        if instance.instance_type == "component":
-            env["COMPONENT_ID"] = instance.id
-        elif instance.instance_type == "server":
-            env["SPLIGHT_SERVER_ID"] = instance.id
-            for env_var in instance.env_vars:
-                env[env_var.name] = env_var.value
+        env["COMPONENT_ID"] = instance.id
         return env
 
     def _get_ports(self, instance: DeployableInstance) -> dict | None:
         if instance.instance_type == "server":
             ports = {}
             for port in instance.ports:
-                ports[
-                    f"{port.internal_port}/{port.protocol}"
-                ] = port.exposed_port
+                ports[f"{port.internal_port}/{port.protocol}"] = (
+                    port.exposed_port
+                )
             return ports
         return None
 

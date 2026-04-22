@@ -68,7 +68,7 @@ class Dispatcher:
         return None
 
     def _compute_actions(self) -> List[EngineAction]:
-        instances = self._compute_node.components + self._compute_node.servers
+        instances = self._compute_node.components
         actions = [
             action
             for instance in instances

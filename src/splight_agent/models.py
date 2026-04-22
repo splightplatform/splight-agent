@@ -13,7 +13,7 @@ from splight_agent.constants import IMAGE_DIRECTORY, EngineActionType
 from splight_agent.exceptions import DownloadError
 from splight_agent.logging import SplightLogger
 from splight_agent.rest_client import RestClient
-from splight_agent.settings import APIVersion, settings
+from splight_agent.settings import settings
 
 logger = SplightLogger(__name__)
 
@@ -69,36 +69,6 @@ class HubComponent(HubInstance):
         except Exception as exc:
             for file_name in os.listdir(IMAGE_DIRECTORY):
                 os.remove(os.path.join(IMAGE_DIRECTORY, file_name))
-            raise DownloadError("Unable to download docker image") from exc
-        return image
-
-
-class HubServer(HubInstance):
-    @property
-    def _image_link(self) -> str:
-        params = {"type": "image"}
-        url_prefix = f"{settings.API_VERSION}/engine/hubserver/versions"
-        response = self._rest_client.get(
-            f"{url_prefix}/{self.id}/download_url/",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()["url"]
-
-    def get_image_file(self) -> str:
-        server_directory = os.path.join(IMAGE_DIRECTORY, "servers")
-        if not os.path.exists(server_directory):
-            os.makedirs(server_directory)
-        image_path = os.path.join(
-            server_directory, f"{self.name}-{self.version}"
-        )
-        try:
-            image = self._rest_client.download(
-                self._image_link, file_path=image_path
-            )
-        except Exception as exc:
-            for file_name in os.listdir(server_directory):
-                os.remove(os.path.join(server_directory, file_name))
             raise DownloadError("Unable to download docker image") from exc
         return image
 
@@ -242,22 +212,6 @@ class EnvVar(BaseModel):
     value: str
 
 
-class Server(DeployableInstance):
-    _COMPARABLE_FIELDS = ["config", "ports", "env_vars"]
-    _INSTANCE_URL = f"{settings.API_VERSION}/engine/server/servers"
-
-    config: list[dict[str, Any]]
-    ports: list[Port]
-    env_vars: list[EnvVar]
-    hub_server: HubServer
-
-    def get_hub_instance(self) -> HubServer:
-        return self.hub_server
-
-    def get_deploy_label(self) -> Literal["ServerID"]:
-        return "ServerID"
-
-
 class ComputeNode(APIObject):
     id: str
     name: str | None = None
@@ -269,14 +223,6 @@ class ComputeNode(APIObject):
             f"{url_prefix}/{self.id}/components/",
         )
         return [Component(**c) for c in response.json()]
-
-    @property
-    def servers(self) -> list[Server]:
-        url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
-        response = self._rest_client.get(
-            f"{url_prefix}/{self.id}/servers/",
-        )
-        return [Server(**s) for s in response.json()]
 
     def report_version(self, version: str) -> None:
         url_prefix = f"{settings.API_VERSION}/engine/compute/nodes/all"
