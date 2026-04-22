@@ -140,20 +140,16 @@ class Engine:
         logger.info(
             f"Starting image download for component: {hub_instance.name} {hub_instance.version}"
         )
-        max_attempts = 3
-        for attempt in range(1, max_attempts + 1):
-            try:
-                image_bytes = hub_instance.get_image_file()
-                return image_bytes
-            except Exception as e:
-                logger.error(
-                    f"Failed to download image for component: {hub_instance.name} "
-                    f"(attempt {attempt}/{max_attempts}): {e}"
-                )
-                if attempt == max_attempts:
-                    raise ImageError(
-                        f"Failed to download image for component: {hub_instance.name}"
-                    ) from e
+        try:
+            image_bytes = hub_instance.get_image_file()
+        except Exception as e:
+            # TODO: Maybe retry? or fail component?
+            logger.error(e)
+            raise ImageError(
+                f"Failed to download image for component: {hub_instance.name}"
+            )
+        return image_bytes
+    
 
     def _load_image(
         self,
