@@ -134,9 +134,7 @@ class Engine:
         }
         return labels
 
-    def _download_image(
-        self, hub_instance: HubComponent
-    ) -> bytes:
+    def _download_image(self, hub_instance: HubComponent) -> bytes:
         logger.info(
             f"Starting image download for component: {hub_instance.name} {hub_instance.version}"
         )
@@ -149,7 +147,7 @@ class Engine:
                 f"Failed to download image for component: {hub_instance.name}"
             )
         return image_bytes
-    
+
 
     def _load_image(
         self,
