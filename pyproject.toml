@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splight-agent"
-venvversion = "0.9.1"
+version = "0.9.1"
 description = ""
 authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
@@ -39,7 +39,9 @@ line-length = 79
 [tool.uv]
 constraint-dependencies = [
  # https://splight.atlassian.net/browse/SECUR-397
- "urllib3>=2.6.3",
+ "urllib3>=2.7.0",
  # https://splight.atlassian.net/browse/SECUR-518
  "requests>=2.33.0",
+ # https://github.com/splightplatform/splight-agent/security/dependabot/19
+ "Pygments>=2.20.0",
 ]
