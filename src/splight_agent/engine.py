@@ -300,6 +300,7 @@ class Engine:
                 container.remove()
             instance.deployment_status = ComponentDeploymentStatus.STOPPED
             instance.update_status()
+            self.prune_images()
         except Exception:
             raise ContainerExecutionError(
                 f"Failed to stop container for {instance.instance_type}: {instance.id}"
@@ -309,6 +310,22 @@ class Engine:
         logger.info(f"Restarting instance: {instance.id}")
         self.stop(instance)
         self.run(instance)
+
+    def prune_images(self) -> None:
+        try:
+            result = self._docker_client.images.prune(
+                filters={"dangling": False}
+            )
+            deleted_images = result.get("ImagesDeleted") or []
+            space_mb_reclaimed = (result.get("SpaceReclaimed") or 0) / (
+                1024 * 1024
+            )
+            if deleted_images:
+                logger.info(
+                    f"Pruned {len(deleted_images)} images, reclaimed {space_mb_reclaimed:.2f} MB"
+                )
+        except Exception as e:
+            logger.error(f"Image prune failed: {e}")
 
     def _get_deployed_containers(
         self, instance: Optional[DeployableInstance] = None
