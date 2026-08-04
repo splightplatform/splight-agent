@@ -1,4 +1,5 @@
-from threading import Thread
+import time
+from threading import Event, Thread
 from typing import Optional, Tuple
 
 from docker import from_env
@@ -23,6 +24,7 @@ class Exporter:
     def __init__(self, compute_node: ComputeNode) -> None:
         self._compute_node = compute_node
         self._client = from_env()
+        self._stop = Event()
         self._thread = Thread(target=self._run_event_loop, daemon=True)
         self._transition_map = {
             ContainerEventAction.CREATE: lambda event: ComponentDeploymentStatus.PENDING,
@@ -85,10 +87,23 @@ class Exporter:
         )
 
     def _run_event_loop(self) -> None:
-        for event in self._client.events(decode=True, filters=self._filters):
-            component = self._get_component_from_event(event)
-            if component:
-                component.update_status()
+        # We check if the component was stopped in other thread
+        while not self._stop.is_set():
+            try:
+                for event in self._client.events(
+                    decode=True, filters=self._filters
+                ):
+                    component = self._get_component_from_event(event)
+                    if component:
+                        try:
+                            component.update_status()
+                        except Exception as e:
+                            logger.warning(
+                                f"Could not report status for component {component.id}: {e}"
+                            )
+            except Exception as e:
+                logger.warning(f"Event stream failed, reconnecting: {e}")
+                time.sleep(5)
 
     def start(self) -> None:
         """
@@ -100,6 +115,6 @@ class Exporter:
     def stop(self) -> None:
         """
         Stop the exporter daemon thread
-        TODO: find a proper way to stop the thread
         """
+        self._stop.set()
         logger.info("Exporter stopped")
