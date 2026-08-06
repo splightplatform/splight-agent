@@ -1,5 +1,8 @@
 import time
+from importlib import metadata
 from threading import Event, Thread
+
+from docker import from_env
 
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
@@ -22,11 +25,47 @@ class Beacon:
         self._client = RestClient()
         self._compute_node = compute_node
         self._base_url = f"{api_version}/engine/compute/nodes/all"
+        self._docker_client = from_env()
+        self._agent_version = metadata.version("splight-agent")
+
+    def _build_snapshot(self) -> dict:
+        try:
+            containers = self._docker_client.containers.list(
+                all=True,
+                filters={
+                    "label": [
+                        f"AgentID={self._compute_node.id}",
+                        "ComponentID",
+                    ]
+                },
+            )
+            return {
+                "agent_version": self._agent_version,
+                "components": [
+                    {
+                        "id": container.labels["ComponentID"],
+                        "container_status": container.status,
+                        "health": container.attrs.get("State", {})
+                        .get("Health", {})
+                        .get("Status"),
+                        "restart_count": container.attrs.get(
+                            "RestartCount", 0
+                        ),
+                        "started_at": container.attrs.get("State", {}).get(
+                            "StartedAt"
+                        ),
+                    }
+                    for container in containers
+                ],
+            }
+        except Exception as e:
+            logger.warning(f"Could not build components snapshot: {e}")
+            return {}
 
     def _ping(self):
         return self._client.post(
             f"{self._base_url}/{self._compute_node.id}/healthcheck/",
-            {},
+            self._build_snapshot(),
         )
 
     def _ping_forever(self):
