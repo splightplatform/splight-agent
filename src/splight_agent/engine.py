@@ -349,21 +349,35 @@ class Engine:
         """
         Stop all running instances and return the ids.
         """
-        setopped_instances: List[DeployableInstance] = []
-        deployed_containers = self._get_deployed_containers()
-        for container in deployed_containers:
-            instance_id = container.labels.get("ComponentID", None)
-            if not instance_id:
-                instance_id = container.labels.get("ServerID", None)
-                instance = Server(id=instance_id)
-            else:
-                instance = Component(id=instance_id)
+        stopped_instances: List[DeployableInstance] = []
+        try:
+            components = {
+                component.id: component
+                for component in self._compute_node.components
+            }
+        except Exception as e:
+            logger.warning(
+                f"Could not fetch components, stopping containers without reporting status: {e}"
+            )
+            components = {}
+
+        for container in self._get_deployed_containers():
+            component = components.get(container.labels.get("ComponentID"))
+            if not component:
+                try:
+                    container.stop()
+                    container.remove()
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to stop container {container.name}: {e}"
+                    )
+                continue
             try:
-                self.stop(instance)
-                setopped_instances.append(instance)
+                self.stop(component)
+                stopped_instances.append(component)
             except ContainerExecutionError:
                 logger.warning(
-                    f"Failed to stop {instance.instance_type}: {instance.name}. "
-                    f"Skipping {instance.instance_type}..."
+                    f"Failed to stop {component.instance_type}: {component.name}. "
+                    f"Skipping {component.instance_type}..."
                 )
-        return setopped_instances
+        return stopped_instances
