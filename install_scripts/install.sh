@@ -60,7 +60,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.11.1"
+AGENT_VERSION="0.11.2"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 STOP_TIMEOUT=600
@@ -170,9 +170,15 @@ docker pull "$DOCKER_IMAGE"
 
 # Stop and remove any pre-existing container before committing the new config.
 # The old container keeps its self-consistent config until it is stopped.
+# Without a token the identity is unchanged, so skip the graceful stop: it
+# would stop every component, and the new agent adopts the running ones.
 if [ -n "$(docker ps -aq -f "name=^${CONTAINER}$")" ]; then
-    print_message "Stopping existing '${CONTAINER}' container (up to ${STOP_TIMEOUT}s for graceful shutdown)..."
-    docker stop "$CONTAINER" --time "$STOP_TIMEOUT" > /dev/null 2>&1 || true
+    if [ -n "$STAGED_CONFIG" ]; then
+        print_message "Stopping existing '${CONTAINER}' container (up to ${STOP_TIMEOUT}s for graceful shutdown)..."
+        docker stop "$CONTAINER" --time "$STOP_TIMEOUT" > /dev/null 2>&1 || true
+    else
+        print_message "Replacing existing '${CONTAINER}' container; components keep running..."
+    fi
     docker rm -f "$CONTAINER" > /dev/null
 fi
 
