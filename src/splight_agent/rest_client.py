@@ -34,7 +34,10 @@ class RestClient:
 
     def post(self, path: str, data: dict) -> requests.Response:
         response = requests.post(
-            self._base_url / path, json=data, headers=self.headers
+            self._base_url / path,
+            json=data,
+            headers=self.headers,
+            timeout=settings.API_TIMEOUT,
         )
         response.raise_for_status()
         return response
@@ -43,14 +46,20 @@ class RestClient:
         self, path: str, params: Optional[dict] = None
     ) -> requests.Response:
         response = requests.get(
-            self._base_url / path, headers=self.headers, params=params
+            self._base_url / path,
+            headers=self.headers,
+            params=params,
+            timeout=settings.API_TIMEOUT,
         )
         response.raise_for_status()
         return response
 
     def patch(self, path: str, data: dict) -> requests.Response:
         response = requests.patch(
-            self._base_url / path, json=data, headers=self.headers
+            self._base_url / path,
+            json=data,
+            headers=self.headers,
+            timeout=settings.API_TIMEOUT,
         )
         response.raise_for_status()
         return response
