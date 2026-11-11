@@ -60,7 +60,7 @@ print_message "$ART_LOGO"
 SPLIGHT_HOME=$HOME/.splight
 CONFIG_FILE=$SPLIGHT_HOME/agent_config
 CONTAINER="splight-agent"
-AGENT_VERSION="0.11.3"
+AGENT_VERSION="0.12.0"
 RESTART_POLICY="unless-stopped"
 LOG_LEVEL=10
 STOP_TIMEOUT=600
@@ -215,5 +215,11 @@ docker run \
       --log-opt max-file=3 \
       --restart "$RESTART_POLICY" \
       "$DOCKER_IMAGE"
+
+for image in $(docker images "${DOCKER_IMAGE%:*}" --format '{{.Repository}}:{{.Tag}}'); do
+    if [ "$image" != "$DOCKER_IMAGE" ]; then
+        docker rmi "$image" > /dev/null 2>&1 || true
+    fi
+done
 
 print_message "Splight agent started successfully."
