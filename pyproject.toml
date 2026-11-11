@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splight-agent"
-version = "0.11.2"
+version = "0.11.3"
 description = ""
 authors = ["Splight <splight-dev@splight-ae.com>"]
 readme = "README.md"
@@ -38,10 +38,12 @@ line-length = 79
 # Version bumps (for example for security alerts) should go here.
 [tool.uv]
 constraint-dependencies = [
- # https://splight.atlassian.net/browse/SECUR-397
- "urllib3>=2.7.0",
- # https://splight.atlassian.net/browse/SECUR-518
- "requests>=2.33.0",
- # https://github.com/splightplatform/splight-agent/security/dependabot/19
- "Pygments>=2.20.0",
+    # https://splight.atlassian.net/browse/SECUR-793
+    "urllib3>=2.8.0",
+    # https://splight.atlassian.net/browse/SECUR-518
+    "requests>=2.33.0",
+    # https://github.com/splightplatform/splight-agent/security/dependabot/19
+    "Pygments>=2.20.0",
+     # https://splight.atlassian.net/browse/SECUR-794
+    "certifi>=v2026.10.19",
 ]
