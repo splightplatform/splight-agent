@@ -216,4 +216,10 @@ docker run \
       --restart "$RESTART_POLICY" \
       "$DOCKER_IMAGE"
 
+for image in $(docker images "${DOCKER_IMAGE%:*}" --format '{{.Repository}}:{{.Tag}}'); do
+    if [ "$image" != "$DOCKER_IMAGE" ]; then
+        docker rmi "$image" > /dev/null 2>&1 || true
+    fi
+done
+
 print_message "Splight agent started successfully."
