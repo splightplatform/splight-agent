@@ -221,17 +221,7 @@ class Engine:
                 ports=ports,
                 network=self._docker_network.name,
                 healthcheck={
-                    "test": [
-                        "CMD",
-                        "sh",
-                        "-c",
-                        "ls",
-                        "/tmp/",
-                        "|",
-                        "grep",
-                        "-q",
-                        "healthy_",
-                    ],
+                    "test": ["CMD-SHELL", "ls /tmp/ | grep -q healthy_"],
                     "interval": 5000000000,  # 5 seconds in nanoseconds
                     "timeout": 5000000000,  # 5 seconds in nanoseconds
                     "start_period": 60000000000,  # 60 seconds in nanoseconds
