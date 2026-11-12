@@ -69,6 +69,7 @@ class Dispatcher:
 
     def _compute_actions(self) -> List[EngineAction]:
         instances = self._compute_node.components
+        self._engine.stop_unassigned({instance.id for instance in instances})
         actions = [
             action
             for instance in instances

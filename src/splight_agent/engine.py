@@ -335,6 +335,22 @@ class Engine:
             return None
         return containers[0].labels["StateHash"]
 
+    def stop_unassigned(self, assigned_ids: set[str]) -> None:
+        for container in self._get_deployed_containers():
+            component_id = container.labels.get("ComponentID")
+            if not component_id or component_id in assigned_ids:
+                continue
+            logger.info(
+                f"Stopping container for unassigned component: {component_id}"
+            )
+            try:
+                container.stop()
+                container.remove()
+            except Exception as e:
+                logger.warning(
+                    f"Failed to stop container {container.name}: {e}"
+                )
+
     def stop_all(self) -> List[DeployableInstance]:
         """
         Stop all running instances and return the ids.
