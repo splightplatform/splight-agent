@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cached_property
-from typing import Any, Literal, Type, TypeVar
+from typing import Any, Literal
 
 from docker.models.containers import Container
 from pydantic import BaseModel
@@ -71,13 +71,6 @@ class HubComponent(HubInstance):
                 os.remove(os.path.join(IMAGE_DIRECTORY, file_name))
             raise DownloadError("Unable to download docker image") from exc
         return image
-
-
-class ContainerEventAction(str, Enum):
-    CREATE = "create"
-    START = "start"
-    STOP = "stop"
-    DIE = "die"
 
 
 class ComponentDeploymentStatus(str, Enum):
@@ -231,21 +224,6 @@ class ComputeNode(APIObject):
             data={"agent_version": version},
         )
         return response
-
-
-T = TypeVar("T", bound=BaseModel)
-
-
-def partial(model: Type[T]) -> Type[T]:
-    class OptionalModel(model):
-        pass
-
-    for field in OptionalModel.__fields__.values():
-        field.required = False
-
-    OptionalModel.__name__ = f"Optional{model.__name__}"
-
-    return OptionalModel
 
 
 class EngineAction(BaseModel):
