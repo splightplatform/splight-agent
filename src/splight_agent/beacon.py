@@ -2,7 +2,6 @@ import time
 from importlib import metadata
 from threading import Event, Thread
 
-import requests
 from docker import from_env
 
 from splight_agent.logging import SplightLogger
@@ -10,28 +9,6 @@ from splight_agent.models import ComputeNode
 from splight_agent.rest_client import RestClient
 
 logger = SplightLogger(__name__)
-
-IMDS_URL = "http://169.254.169.254/latest"
-
-
-def _get_instance_id() -> str | None:
-    try:
-        token = requests.put(
-            f"{IMDS_URL}/api/token",
-            headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"},
-            timeout=2,
-        )
-        token.raise_for_status()
-        response = requests.get(
-            f"{IMDS_URL}/meta-data/instance-id",
-            headers={"X-aws-ec2-metadata-token": token.text},
-            timeout=2,
-        )
-        response.raise_for_status()
-        return response.text
-    except Exception as e:
-        logger.warning(f"Could not read EC2 instance id: {e}")
-        return None
 
 
 class Beacon:
@@ -50,7 +27,6 @@ class Beacon:
         self._base_url = f"{api_version}/engine/compute/nodes/all"
         self._docker_client = from_env()
         self._agent_version = metadata.version("splight-agent")
-        self._instance_id = _get_instance_id()
 
     def _build_snapshot(self) -> dict:
         try:
@@ -65,7 +41,6 @@ class Beacon:
             )
             return {
                 "agent_version": self._agent_version,
-                "instance_id": self._instance_id,
                 "components": [
                     {
                         "id": container.labels["ComponentID"],
