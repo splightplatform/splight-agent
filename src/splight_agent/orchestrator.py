@@ -6,7 +6,6 @@ from splight_agent.beacon import Beacon
 from splight_agent.crash_reporter import CrashReporter
 from splight_agent.dispatcher import Dispatcher
 from splight_agent.engine import Engine
-from splight_agent.exporter import Exporter
 from splight_agent.logging import SplightLogger
 from splight_agent.models import ComputeNode
 from splight_agent.settings import SplightSettings
@@ -49,9 +48,6 @@ class Orchestrator:
             api_version=self._settings.API_VERSION,
         )
 
-    def _create_exporter(self) -> Exporter:
-        return Exporter(compute_node=self._compute_node)
-
     def _create_crash_reporter(self) -> CrashReporter:
         return CrashReporter(compute_node=self._compute_node)
 
@@ -71,13 +67,11 @@ class Orchestrator:
     def __init__(self) -> None:
         self._engine = self._create_engine()
         self._beacon = self._create_beacon()
-        self._exporter = self._create_exporter()
         self._crash_reporter = self._create_crash_reporter()
         self._dispatcher = self._create_dispatcher(self._engine)
 
     def start(self):
         self._report_agent_version()
-        self._exporter.start()
         self._crash_reporter.start()
         self._beacon.start()
         if self._settings.REPORT_USAGE:
@@ -95,6 +89,5 @@ class Orchestrator:
         self._dispatcher.wait_for_instances_to_stop(stopped_instances)
         logger.info("All components stopped")
         self._beacon.stop()
-        self._exporter.stop()
         self._crash_reporter.stop()
         sys.exit(0)
